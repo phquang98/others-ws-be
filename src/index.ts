@@ -1,10 +1,11 @@
 import express from "express";
 import raRest from "ra-data-simple-rest";
+import cors from "cors";
 
 import logging from "./config/logging";
 import config from "./config/config";
 import { participantRouter } from "./routes/";
-import { topLog, cors, notExisted } from "./middlewares";
+import { topLog, notExisted } from "./middlewares";
 import { extractDataFromXlsx, xlsxQueryConstructor } from "./middlewares/upload";
 
 const app = express();
@@ -13,7 +14,7 @@ const app = express();
 
 app.use(express.json()); // ~ body-parser; allow req.body -> JSON + no manual JSON.stringify/JSON.parse
 app.use(topLog);
-app.use(cors);
+app.use(cors());
 
 // --- Routing ---
 app.use("/participant", participantRouter);

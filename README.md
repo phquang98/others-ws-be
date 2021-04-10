@@ -45,18 +45,43 @@ Practice example using TS + NodeJS + Express + MySQL
 
 ```SQL
 CREATE TABLE participant (
-  id INT PRIMARY KEY AUTO_INCREMENT,
   first_name VARCHAR(50) NOT NULL,
   last_name VARCHAR(50) NOT NULL,
-  participant_id VARCHAR(50),
+  participant_id VARCHAR(50) NOT NULL PRIMARY KEY,
   dob DATE NOT NULL,
   email VARCHAR(254) NOT NULL
+);
+
+CREATE TABLE course (
+  course_id VARCHAR(50) NOT NULL PRIMARY KEY,
+  course_title VARCHAR(50) NOT NULL,
+  course_description TEXT,
+  date_started DATE NOT NULL,
+  date_ended DATE NOT NULL
+);
+
+CREATE TABLE course_participants (
+  course_id VARCHAR(50) NOT NULL,
+  participant_id VARCHAR(50) NOT NULL,
+  assignment_1 INT,
+  assignment_2 INT,
+  assignment_3 INT,
+  exam INT,
+  final_grades DECIMAL(5,3),
+  FOREIGN KEY (participant_id) REFERENCES participant(participant_id) ON DELETE CASCADE,
+  FOREIGN KEY (course_id) REFERENCES course(course_id) ON DELETE CASCADE
 );
 
 INSERT INTO participant (first_name, last_name, participant_id, dob, email) VALUES
 ("John","Doe", "e123456","1972-06-13","johndoe@gmail.com"),
 ("Jane","Dean", "e123123","1956-01-07","janedean@gmail.com"),
 ("Joe","Dawn", "e123000","1998-02-13","joedawn@gmail.com");
+
+INSERT INTO course (course_id, course_title, course_description, date_started, date_ended) VALUES
+("CS100","Web Services", "This teach web development.","2021-12-01","2021-12-31");
+
+INSERT INTO course_participants (course_id, participant_id, assignment_1, assignment_2, assignment_3, exam, final_grades) VALUES
+("CS100","e123456", 7,3, 5,  6, 9.456);
 ```
 
 ## Resources

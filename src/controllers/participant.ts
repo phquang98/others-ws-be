@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from "express";
 import logging from "../config/logging";
 import { dbOps } from "../config/mysql";
 import { extractDataFromXlsx, xlsxQueryConstructor } from "../middlewares/upload";
-import { Participant } from "../models/participant";
+import { Participant } from "../models/types";
 
 const NAMESPACE = "CONTROLLERS";
 
@@ -80,7 +80,7 @@ const editPersonByPersonID = (req: Request<ReqParams, {}, ReqBody>, res: Respons
 
 const editPersonByPersonName = (req: Request<ReqParams, {}, ReqBody>, res: Response, next: NextFunction) => {
   let query = `UPDATE participant SET first_name = ?, participant_id = ?, dob = ?, email = ? WHERE last_name = ?`;
-  let escapeValues = [req.body.first_name, req.body.participant_id, req.body.dob, req.body.email, req.body.last_name];
+  let escapeValues = [req.body.first_name, req.body.participant_id, req.body.dob, req.body.email, req.body.last_name]; //
 
   dbOps(query, escapeValues)
     .then((queryRes) => {
@@ -109,10 +109,10 @@ const deletePersonByPersonID = (req: Request<ReqParams>, res: Response, next: Ne
 };
 
 // maybe SQL injection vulnerable here
-const uploadXlsxDataToDB = async (req: Request, res: Response, next: NextFunction) => {
-  let queryValues = await xlsxQueryConstructor(extractDataFromXlsx(filePath, sheetNameHere));
+const uploadXlsxDataToDB = async (req: Request<{}, {}, ReqBody[]>, res: Response, next: NextFunction) => {
+  let queryValues = await xlsxQueryConstructor(req.body);
   let query = `INSERT INTO participant (first_name, last_name, participant_id, dob, email) VALUES ${queryValues}`;
-  console.log("controller", "Query looks like this:", query); //
+  console.log(query);
 
   dbOps(query)
     .then((queryRes) => {

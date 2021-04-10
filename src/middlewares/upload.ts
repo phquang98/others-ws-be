@@ -1,7 +1,7 @@
 import xlsx, { ParsingOptions, Sheet2JSONOpts } from "xlsx";
 import logging from "../config/logging";
 
-import { Participant } from "../models/participant";
+import { Participant } from "../models/types";
 
 const excelParseOpts: ParsingOptions = {
   cellDates: true, // ExcelDateFormat (5 nums) -> JSDateFormat
