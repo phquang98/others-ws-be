@@ -51,4 +51,3 @@ const xlsxQueryConstructor = (data: Participant[]): Promise<string> => {
 };
 
 export { extractDataFromXlsx, xlsxQueryConstructor };
-//

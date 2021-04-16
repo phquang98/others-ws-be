@@ -1,4 +1,5 @@
-import mysql2, { ConnectionOptions } from "mysql2";
+import mysql2, { ConnectionOptions, RowDataPacket } from "mysql2";
+import { Participant } from "../models/types";
 
 import config from "./config";
 
@@ -17,4 +18,6 @@ const dbOps = async (queryValue: string, escapeValues?: any | any[] | { [param: 
   // return await connInstance.query(queryValue);
 };
 
-export { dbOps };
+const PromisablePoolCXN = mysql2.createPool(ConnParams).promise();
+
+export { dbOps, PromisablePoolCXN };

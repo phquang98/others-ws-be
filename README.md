@@ -6,17 +6,36 @@ Practice example using TS + NodeJS + Express + MySQL
 
 - `npm run build`: build the whole project from TS -> JS
 - `npm start`: runs the server with nodemon
-- fake comment to fake merge conflicts
 
 ## Todo
 
-- [x] create the server + custom helper fncs in configs
-  - [x] finish the MySQL conn
-  - [x] finnish the envi variables
-- [x] implemnet CRUD ops
-  - [] must have 9 CRUD actions based on RA Data Provider
-  - [x] manual testing ok through Postman
-- [ ] add prettier, eslint, githooks to project
+- [ ] barebone
+  - [ ] create an empty server
+  - [ ] create config folder contains logic code to connect to db + custom loggings + setup envi vars
+- [ ] implement CRUD (manual testing using POSTMAN atm)
+  - [ ] each models MUST HAVE id attri for RA to use
+  - [ ] for participant
+  - [ ] for course
+  - [ ] for course_participant
+  - [ ] (OPT) have 9 CRUD actions based on RA `dataProvider()`
+- [ ] (OPT) add prettier, eslint, githooks to project
+- [ ] (OPT) maybe need to perform DB call testing
+  - [ ] to check DB exist
+  - [ ] to check 3 tables exist
+
+## Explain
+
+`index.ts`:
+
+- `app.use(express.json())`
+
+1. `const [rows, fields] = queryRes;`: cares only about the data part  
+   `mysql/mysql2` returns arr of 2 ele arrs, 1st is row data contains data, 2nd is column data contains the column info in Excel file, aka column for date or money value only, etc
+
+   `const getListRes: Array<Participant> = JSON.parse(JSON.stringify(rows));`
+
+2.
+3.
 
 ## Notes
 
@@ -38,6 +57,13 @@ Practice example using TS + NodeJS + Express + MySQL
     - type date, v is raw value, w is formmated text
     - `{raw: false}` -> use `w` instead of `v`
 - dwl `ra-data-simple-rest` to know how to write a Data Provider for RA, del later
+- to comply with RA `getOne`, hacky by take only the first `BinaryRow` from `mysql`, then hack it with JSON to pure `Array<Participant>` so that return result is only an obj
+  - see <https://github.com/mysqljs/mysql/issues/1899>
+- comply with RA `update`, after done operation also must return the obj that has been changed
+
+  - dirty fix, use 2 controllers to handle this
+
+- MYSQL Workbench 8.0, use Pooling, get error Malformed comm packet.
 
 ## Fake SQL
 
@@ -45,6 +71,7 @@ Practice example using TS + NodeJS + Express + MySQL
 
 ```SQL
 CREATE TABLE participant (
+  id INT NOT NULL UNIQUE,
   first_name VARCHAR(50) NOT NULL,
   last_name VARCHAR(50) NOT NULL,
   participant_id VARCHAR(50) NOT NULL PRIMARY KEY,
@@ -53,6 +80,7 @@ CREATE TABLE participant (
 );
 
 CREATE TABLE course (
+  id INT NOT NULL,
   course_id VARCHAR(50) NOT NULL PRIMARY KEY,
   course_title VARCHAR(50) NOT NULL,
   course_description TEXT,
@@ -60,7 +88,8 @@ CREATE TABLE course (
   date_ended DATE NOT NULL
 );
 
-CREATE TABLE course_participants (
+CREATE TABLE course_participant (
+  id INT NOT NULL,
   course_id VARCHAR(50) NOT NULL,
   participant_id VARCHAR(50) NOT NULL,
   assignment_1 INT,
@@ -72,16 +101,17 @@ CREATE TABLE course_participants (
   FOREIGN KEY (course_id) REFERENCES course(course_id) ON DELETE CASCADE
 );
 
-INSERT INTO participant (first_name, last_name, participant_id, dob, email) VALUES
-("John","Doe", "e123456","1972-06-13","johndoe@gmail.com"),
-("Jane","Dean", "e123123","1956-01-07","janedean@gmail.com"),
-("Joe","Dawn", "e123000","1998-02-13","joedawn@gmail.com");
+INSERT INTO participant (id, first_name, last_name, participant_id, dob, email) VALUES
+(1,"Cody","Arnold", "e258693","1983-11-15","codya@gmail.com"),
+(2,"Peter","Harrison", "e094925","1975-07-09","peterh@gmail.com"),
+(3,"Elisie","Barton", "e461580","1999-03-12","ebarton@gmail.com");
 
-INSERT INTO course (course_id, course_title, course_description, date_started, date_ended) VALUES
-("CS100","Web Services", "This teach web development.","2021-12-01","2021-12-31");
+INSERT INTO course (id, course_id, course_title, course_description, date_started, date_ended) VALUES
+(1,"CS100","Web Services", "This teach web development.","2021-12-01","2021-12-31");
 
-INSERT INTO course_participants (course_id, participant_id, assignment_1, assignment_2, assignment_3, exam, final_grades) VALUES
-("CS100","e123456", 7,3, 5,  6, 9.456);
+INSERT INTO course_participant (id, course_id, participant_id, assignment_1, assignment_2, assignment_3, exam, final_grades) VALUES
+(1,"CS100","e258693", 7,3, 5,  6, 9.456),
+(1,"CS100","e094925", 2,6, 6,  4, 5.52);
 ```
 
 ## Resources
@@ -104,3 +134,149 @@ INSERT INTO course_participants (course_id, participant_id, assignment_1, assign
   - IRL: 1,2,3 -> delete 3 -> 1,2,4,5
   - desired: 1,2,3 -> delete 3 -> 1,2,3,4
 - should try to update to pooling instead of single connection
+- ra use `id` prop to do everything -> force BE must implement `id` prop to handle HTTP logic
+
+## How the queryRes looks like
+
+```javascript
+[
+    [
+        BinaryRow {
+            id: 1,
+            first_name: 'Cody',
+            last_name: 'Arnold',
+            participant_id: 'e258693',
+            dob: 1983 - 11 - 12 T21: 00: 00.000 Z,
+            email: 'codya@gmail.com'
+        }
+    ],
+    [
+        ColumnDefinition {
+            _buf: < Buffer 01 00 00 01 06 3 b 00 00 02 03 64 65 66 0b 64 62 5 f 74 65 73 74 5 f 78 6 f 61 0b 70 61 72 74 69 63 69 70 61 6 e 74 0b 70 61 72 74 69 63 69 70 61 6 e 74 02...464 more bytes > ,
+            _clientEncoding: 'utf8',
+            _catalogLength: 3,
+            _catalogStart: 10,
+            _schemaLength: 11,
+            _schemaStart: 14,
+            _tableLength: 11,
+            _tableStart: 26,
+            _orgTableLength: 11,
+            _orgTableStart: 38,
+            _orgNameLength: 2,
+            _orgNameStart: 53,
+            characterSet: 63,
+            encoding: 'binary',
+            name: 'id',
+            columnLength: 11,
+            columnType: 3,
+            flags: 20485,
+            decimals: 0
+        },
+        ColumnDefinition {
+            _buf: < Buffer 01 00 00 01 06 3 b 00 00 02 03 64 65 66 0b 64 62 5 f 74 65 73 74 5 f 78 6 f 61 0b 70 61 72 74 69 63 69 70 61 6 e 74 0b 70 61 72 74 69 63 69 70 61 6 e 74 02...464 more bytes > ,
+            _clientEncoding: 'utf8',
+            _catalogLength: 3,
+            _catalogStart: 73,
+            _schemaLength: 11,
+            _schemaStart: 77,
+            _tableLength: 11,
+            _tableStart: 89,
+            _orgTableLength: 11,
+            _orgTableStart: 101,
+            _orgNameLength: 10,
+            _orgNameStart: 124,
+            characterSet: 224,
+            encoding: 'utf8',
+            name: 'first_name',
+            columnLength: 200,
+            columnType: 253,
+            flags: 4097,
+            decimals: 0
+        },
+        ColumnDefinition {
+            _buf: < Buffer 01 00 00 01 06 3 b 00 00 02 03 64 65 66 0b 64 62 5 f 74 65 73 74 5 f 78 6 f 61 0b 70 61 72 74 69 63 69 70 61 6 e 74 0b 70 61 72 74 69 63 69 70 61 6 e 74 02...464 more bytes > ,
+            _clientEncoding: 'utf8',
+            _catalogLength: 3,
+            _catalogStart: 152,
+            _schemaLength: 11,
+            _schemaStart: 156,
+            _tableLength: 11,
+            _tableStart: 168,
+            _orgTableLength: 11,
+            _orgTableStart: 180,
+            _orgNameLength: 9,
+            _orgNameStart: 202,
+            characterSet: 224,
+            encoding: 'utf8',
+            name: 'last_name',
+            columnLength: 200,
+            columnType: 253,
+            flags: 4097,
+            decimals: 0
+        },
+        ColumnDefinition {
+            _buf: < Buffer 01 00 00 01 06 3 b 00 00 02 03 64 65 66 0b 64 62 5 f 74 65 73 74 5 f 78 6 f 61 0b 70 61 72 74 69 63 69 70 61 6 e 74 0b 70 61 72 74 69 63 69 70 61 6 e 74 02...464 more bytes > ,
+            _clientEncoding: 'utf8',
+            _catalogLength: 3,
+            _catalogStart: 229,
+            _schemaLength: 11,
+            _schemaStart: 233,
+            _tableLength: 11,
+            _tableStart: 245,
+            _orgTableLength: 11,
+            _orgTableStart: 257,
+            _orgNameLength: 14,
+            _orgNameStart: 284,
+            characterSet: 224,
+            encoding: 'utf8',
+            name: 'participant_id',
+            columnLength: 200,
+            columnType: 253,
+            flags: 20483,
+            decimals: 0
+        },
+        ColumnDefinition {
+            _buf: < Buffer 01 00 00 01 06 3 b 00 00 02 03 64 65 66 0b 64 62 5 f 74 65 73 74 5 f 78 6 f 61 0b 70 61 72 74 69 63 69 70 61 6 e 74 0b 70 61 72 74 69 63 69 70 61 6 e 74 02...464 more bytes > ,
+            _clientEncoding: 'utf8',
+            _catalogLength: 3,
+            _catalogStart: 316,
+            _schemaLength: 11,
+            _schemaStart: 320,
+            _tableLength: 11,
+            _tableStart: 332,
+            _orgTableLength: 11,
+            _orgTableStart: 344,
+            _orgNameLength: 3,
+            _orgNameStart: 360,
+            characterSet: 63,
+            encoding: 'binary',
+            name: 'dob',
+            columnLength: 10,
+            columnType: 10,
+            flags: 4225,
+            decimals: 0
+        },
+        ColumnDefinition {
+            _buf: < Buffer 01 00 00 01 06 3 b 00 00 02 03 64 65 66 0b 64 62 5 f 74 65 73 74 5 f 78 6 f 61 0b 70 61 72 74 69 63 69 70 61 6 e 74 0b 70 61 72 74 69 63 69 70 61 6 e 74 02...464 more bytes > ,
+            _clientEncoding: 'utf8',
+            _catalogLength: 3,
+            _catalogStart: 381,
+            _schemaLength: 11,
+            _schemaStart: 385,
+            _tableLength: 11,
+            _tableStart: 397,
+            _orgTableLength: 11,
+            _orgTableStart: 409,
+            _orgNameLength: 5,
+            _orgNameStart: 427,
+            characterSet: 224,
+            encoding: 'utf8',
+            name: 'email',
+            columnLength: 1016,
+            columnType: 253,
+            flags: 4097,
+            decimals: 0
+        }
+    ]
+]
+```

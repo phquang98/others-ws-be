@@ -6,27 +6,24 @@ import logging from "./config/logging";
 import config from "./config/config";
 import { participantRouter } from "./routes/";
 import { topLog, notExisted } from "./middlewares";
-import { extractDataFromXlsx, xlsxQueryConstructor } from "./middlewares/upload";
 
 const app = express();
 
-// --- Top Lv Middlewares ---
+//* --- Top Lv Middlewares ---
 
 app.use(express.json()); // ~ body-parser; allow req.body -> JSON + no manual JSON.stringify/JSON.parse
 app.use(topLog);
 app.use(cors());
 
-// --- Routing ---
+//* --- Routing ---
+
 app.use("/participant", participantRouter);
 
-// --- Error Middlewares ---
+//* --- Error Middlewares ---
+
 app.use(notExisted);
 
-// --- Delete this part ---
-// xlsxQueryConstructor(extractDataFromXlsx("D:/xoa/fakedata1.xlsx", "Fake Data 1")).then((cac) => {
-//   console.log(cac);
-// });
-// --- Delete part end ---
+//* --- Entry point ---
 
 app.listen(config.server.port, () =>
   logging.info(`App`, `Server running on ${config.server.hostname}:${config.server.port}`)

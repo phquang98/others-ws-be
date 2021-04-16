@@ -1,5 +1,5 @@
 type Participant = {
-  id?: number;
+  id: number;
   first_name: string;
   last_name: string;
   participant_id: string;
@@ -8,6 +8,7 @@ type Participant = {
 };
 
 type Course = {
+  id: number;
   course_id: string;
   course_title: string;
   course_description?: string;
@@ -16,6 +17,7 @@ type Course = {
 };
 
 type Course_Participant = {
+  id: number;
   course_id: string;
   participant_id: string;
   assignment1?: number;

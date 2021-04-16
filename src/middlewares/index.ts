@@ -1,8 +1,15 @@
 import { Request, Response, NextFunction } from "express";
+import dotenv from "dotenv";
 
 import logging from "../config/logging";
+import { dbOps, PromisablePoolCXN as pool } from "../config/mysql";
+import { xlsxQueryConstructor } from "../middlewares/upload";
+import { Participant } from "../models/types";
 
 const NAMESPACE = "App";
+
+dotenv.config();
+const tbl = process.env.MYSQL_TBL_1;
 
 // logs to console for any endpoint is visited
 const topLog = (req: Request, res: Response, next: NextFunction) => {
@@ -31,6 +38,32 @@ const cors = (req: Request, res: Response, next: NextFunction) => {
   next();
 };
 
+const getListMdlwr = (req: Request, res: Response, next: NextFunction) => {
+  let countRes: { total_count: number }[];
+  res.header("Access-Control-Expose-Headers", "X-Total-Count");
+  // res.header("Vary", "Origin, Accept-Encoding");
+
+  const countQuery = `SELECT COUNT(*) as total_count FROM ${tbl}`;
+
+  pool
+    .execute(countQuery)
+    .then((queryRes) => {
+      logging.info(NAMESPACE, `count`);
+      const [rows, fields] = queryRes;
+      countRes = JSON.parse(JSON.stringify(rows));
+      // return res.status(200).json(getListRes);
+    })
+    .catch((queryErr) => {
+      logging.error(NAMESPACE, queryErr.message, queryErr);
+    });
+
+  //! This can outputs the total count, BUT IT IS ASYNC -> CANT SOLVE THIS ATM, AS WE NEED THIS IMMEDIATELY EACH TIME HTTP getList
+  // res.header("X-Total-Count", countRes[0].total_count.toString());
+  res.header("X-Total-Count", "1");
+  //
+  next();
+};
+
 // trigger when no other middlewares runs before it
 // must be last middleware
 const notExisted = (req: Request, res: Response, next: NextFunction) => {
@@ -42,5 +75,6 @@ const notExisted = (req: Request, res: Response, next: NextFunction) => {
 
   next();
 };
+// asd
 
-export { topLog, cors, notExisted };
+export { topLog, cors, notExisted, getListMdlwr };
