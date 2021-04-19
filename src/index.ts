@@ -4,8 +4,9 @@ import cors from "cors";
 
 import logging from "./config/logging";
 import config from "./config/config";
-import { participantRouter } from "./routes/";
+import { participantRouter } from "./routes/participant";
 import { topLog, notExisted } from "./middlewares";
+import { courseRouter } from "./routes/course";
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use(cors());
 //* --- Routing ---
 
 app.use("/participant", participantRouter);
+app.use("/course", courseRouter);
 
 //* --- Error Middlewares ---
 

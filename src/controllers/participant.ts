@@ -6,6 +6,8 @@ import { dbOps, PromisablePoolCXN as pool } from "../config/mysql";
 import { xlsxQueryConstructor } from "../middlewares/upload";
 import { Participant } from "../models/types";
 
+//* Variables
+
 const NAMESPACE = "CONTROLLERS/PART";
 
 dotenv.config();
@@ -26,7 +28,7 @@ type ReqQuery = {
   last_name?: string;
 };
 
-// --- NEW SHIT ---
+//* Methods
 
 const getListRACompatible = (req: Request<{}, {}, {}, ReqQuery>, res: Response<Participant[]>, next: NextFunction) => {
   let query = `SELECT * FROM ${tbl} ORDER BY ${req.query._sort} ${req.query._order}`;

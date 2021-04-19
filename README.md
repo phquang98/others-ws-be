@@ -9,8 +9,22 @@ Practice example using TS + NodeJS + Express + MySQL
 
 ## Notes
 
-- the vscode settings tells vscode to auto pick up prettier to be the format
-- tutorial use `body-parser`, you can use `express.json()`
+**Dataflow**
+
+- mysql2 -> `[[BinaryRow {{resource1},{resource2},...}][someDataAboutCols]]`
+- extract the 1st arr ele only -> `const [rows, fields] = queryRes;`
+- spit back to FE with JSON only -> `ra-data-json-server` transforms the rest
+- `ra-data-json-server` wraps those based on RA Data Response Format -> feeds to RA Core -> render to FE
+  - [here](https://marmelab.com/react-admin/DataProviders.html#response-format)
+
+**Controllers**
+
+- `getList`:
+  - called when FE first loaded
+  - called each time search
+  - called each time sort
+- `getOne`:
+
 - custom loggings:
   - NAMESPACE: 2nd [], where the error code lies in what folder
 - use `mysql2` instead of `mysql` -> some key points:
@@ -27,13 +41,8 @@ Practice example using TS + NodeJS + Express + MySQL
     - type date, v is raw value, w is formmated text
     - `{raw: false}` -> use `w` instead of `v`
 - dwl `ra-data-simple-rest` to know how to write a Data Provider for RA, del later
-- to comply with RA `getOne`, hacky by take only the first `BinaryRow` from `mysql`, then hack it with JSON to pure `Array<Participant>` so that return result is only an obj
+- to comply with RA `getOne`, hacky by take only the first `BinaryRow` from `mysql`, then hack it with JSON to pure `Array<TResource>` so that return result is only an obj
   - see <https://github.com/mysqljs/mysql/issues/1899>
-- comply with RA `update`, after done operation also must return the obj that has been changed
-
-  - dirty fix, use 2 controllers to handle this
-
-- MYSQL Workbench 8.0, use Pooling, get error Malformed comm packet.
 
 ## Fake SQL
 
@@ -50,7 +59,7 @@ CREATE TABLE participant (
 );
 
 CREATE TABLE course (
-  id INT NOT NULL,
+  id INT NOT NULL UNIQUE,
   course_id VARCHAR(50) NOT NULL PRIMARY KEY,
   course_title VARCHAR(50) NOT NULL,
   course_description TEXT,
@@ -59,7 +68,7 @@ CREATE TABLE course (
 );
 
 CREATE TABLE course_participant (
-  id INT NOT NULL,
+  id INT NOT NULL UNIQUE,
   course_id VARCHAR(50) NOT NULL,
   participant_id VARCHAR(50) NOT NULL,
   assignment_1 INT,

@@ -41,7 +41,6 @@ const cors = (req: Request, res: Response, next: NextFunction) => {
 const getListMdlwr = (req: Request, res: Response, next: NextFunction) => {
   let countRes: { total_count: number }[];
   res.header("Access-Control-Expose-Headers", "X-Total-Count");
-  // res.header("Vary", "Origin, Accept-Encoding");
 
   const countQuery = `SELECT COUNT(*) as total_count FROM ${tbl}`;
 

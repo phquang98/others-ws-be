@@ -1,7 +1,8 @@
 // Custom loggings helper fncs, simpler than morgan
 
 const getTimeStamp = (): string => {
-  return new Date().toISOString();
+  const timeRes = new Date().toISOString();
+  return timeRes;
 };
 
 const showInfo = (namespace: string, msg: string, relatedObj?: object) => {
