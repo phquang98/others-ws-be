@@ -15,10 +15,23 @@ type ReqParams = {
   id?: number;
 };
 
+type ReqQuery = {
+  // default
+  _end?: string;
+  _order?: "ASC" | "DESC";
+  _sort?: string;
+  _start?: string;
+  id?: string;
+  // custom
+  last_name?: string;
+};
+
 // --- NEW SHIT ---
 
-const getListRACompatible = (req: Request, res: Response<Participant[]>, next: NextFunction) => {
-  let query = `SELECT * FROM ${tbl}`;
+const getListRACompatible = (req: Request<{}, {}, {}, ReqQuery>, res: Response<Participant[]>, next: NextFunction) => {
+  let query = `SELECT * FROM ${tbl} ORDER BY ${req.query._sort} ${req.query._order}`;
+  const fishingQuery = req.query;
+  let searchQuery = `SELECT * FROM ${tbl} WHERE last_name="${req.query.last_name}"`;
 
   // pool.getConnection().then((cxn) => {
   //   cxn
@@ -34,18 +47,31 @@ const getListRACompatible = (req: Request, res: Response<Participant[]>, next: N
   //       logging.error(NAMESPACE, queryErr.message, queryErr);
   //     });
   // });
-
-  pool
-    .execute(query)
-    .then((queryRes) => {
-      logging.info(NAMESPACE, `getAll`, req.params);
-      const [rows, fields] = queryRes; //TODO
-      const getListRes: Array<Participant> = JSON.parse(JSON.stringify(rows)); //TODO
-      return res.status(200).json(getListRes);
-    })
-    .catch((queryErr) => {
-      logging.error(NAMESPACE, queryErr.message, queryErr);
-    });
+  if (req.query.last_name) {
+    logging.info(NAMESPACE, `getList?last_name`, { reqParams: req.params, reqQuery: fishingQuery });
+    pool
+      .execute(searchQuery)
+      .then((queryRes) => {
+        const [rows, fields] = queryRes; //TODO
+        const getListRes: Array<Participant> = JSON.parse(JSON.stringify(rows)); //TODO
+        return res.status(200).json(getListRes);
+      })
+      .catch((queryErr) => {
+        logging.error(NAMESPACE, queryErr.message, queryErr);
+      });
+  } else {
+    logging.info(NAMESPACE, `getList`, { reqParams: req.params, reqQuery: fishingQuery });
+    pool
+      .execute(query)
+      .then((queryRes) => {
+        const [rows, fields] = queryRes; //TODO
+        const getListRes: Array<Participant> = JSON.parse(JSON.stringify(rows)); //TODO
+        return res.status(200).json(getListRes);
+      })
+      .catch((queryErr) => {
+        logging.error(NAMESPACE, queryErr.message, queryErr);
+      });
+  }
 };
 
 const getOneRACompatible = (req: Request<ReqParams>, res: Response<Participant>, next: NextFunction) => {

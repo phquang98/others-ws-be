@@ -48,7 +48,6 @@ const getListMdlwr = (req: Request, res: Response, next: NextFunction) => {
   pool
     .execute(countQuery)
     .then((queryRes) => {
-      logging.info(NAMESPACE, `count`);
       const [rows, fields] = queryRes;
       countRes = JSON.parse(JSON.stringify(rows));
       // return res.status(200).json(getListRes);

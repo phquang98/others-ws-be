@@ -11,7 +11,7 @@ const app = express();
 
 //* --- Top Lv Middlewares ---
 
-app.use(express.json()); // ~ body-parser; allow req.body -> JSON + no manual JSON.stringify/JSON.parse
+app.use(express.json());
 app.use(topLog);
 app.use(cors());
 

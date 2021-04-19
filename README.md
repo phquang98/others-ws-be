@@ -7,36 +7,6 @@ Practice example using TS + NodeJS + Express + MySQL
 - `npm run build`: build the whole project from TS -> JS
 - `npm start`: runs the server with nodemon
 
-## Todo
-
-- [ ] barebone
-  - [ ] create an empty server
-  - [ ] create config folder contains logic code to connect to db + custom loggings + setup envi vars
-- [ ] implement CRUD (manual testing using POSTMAN atm)
-  - [ ] each models MUST HAVE id attri for RA to use
-  - [ ] for participant
-  - [ ] for course
-  - [ ] for course_participant
-  - [ ] (OPT) have 9 CRUD actions based on RA `dataProvider()`
-- [ ] (OPT) add prettier, eslint, githooks to project
-- [ ] (OPT) maybe need to perform DB call testing
-  - [ ] to check DB exist
-  - [ ] to check 3 tables exist
-
-## Explain
-
-`index.ts`:
-
-- `app.use(express.json())`
-
-1. `const [rows, fields] = queryRes;`: cares only about the data part  
-   `mysql/mysql2` returns arr of 2 ele arrs, 1st is row data contains data, 2nd is column data contains the column info in Excel file, aka column for date or money value only, etc
-
-   `const getListRes: Array<Participant> = JSON.parse(JSON.stringify(rows));`
-
-2.
-3.
-
 ## Notes
 
 - the vscode settings tells vscode to auto pick up prettier to be the format
