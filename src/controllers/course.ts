@@ -1,9 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
 
-import logging from "../config/logging";
-import { Course } from "../models/types";
-import { PromisablePoolCXN as pool } from "../config/mysql";
+import logging from "../helpers/logging";
+import { Course, MySQLErr } from "../models/types";
+import { PromisablePoolCXN as pool } from "../helpers/mysql";
+import { mysqlErrorHdlr } from "../helpers/common";
 
 //* Variables
 
@@ -78,11 +79,7 @@ const getOneRACompatible = (req: Request<ReqParams>, res: Response<Course>, next
     });
 };
 
-const createAndGetOneRACompatible = (
-  req: Request<ReqParams, {}, Course>,
-  res: Response<Course>,
-  next: NextFunction
-) => {
+const createAndGetOneRACompatible = (req: Request<ReqParams, {}, Course>, res: Response, next: NextFunction) => {
   let createQuery = `INSERT INTO ${tbl} (id, course_id, course_title, course_description, date_started, date_ended) 
   VALUES (?, ?, ?, ?, ?, ?)`;
   let createEscapeValues = [
@@ -96,14 +93,14 @@ const createAndGetOneRACompatible = (
   const getQuery = `SELECT * FROM ${tbl} WHERE id = ? `;
   const getEscapeValues = [req.body.id];
 
+  logging.info(NAMESPACE, `create`, req.body);
   pool
     .execute(createQuery, createEscapeValues)
     .then(() => {
-      logging.info(NAMESPACE, `create`, req.body);
+      logging.info(NAMESPACE, `getOne`, req.params);
       pool
         .execute(getQuery, getEscapeValues)
         .then((queryRes) => {
-          logging.info(NAMESPACE, `getOne`, req.params);
           const [rows, fields] = queryRes;
           const createRes: Course[] = JSON.parse(JSON.stringify(rows));
           return res.status(200).json(createRes[0]);
@@ -112,8 +109,9 @@ const createAndGetOneRACompatible = (
           logging.error(NAMESPACE, queryErr.message, queryErr);
         });
     })
-    .catch((queryErr) => {
+    .catch((queryErr: MySQLErr) => {
       logging.error(NAMESPACE, queryErr.message, queryErr);
+      mysqlErrorHdlr(queryErr, res);
     });
 };
 

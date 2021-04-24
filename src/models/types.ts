@@ -20,11 +20,28 @@ type Course_Participant = {
   id: number;
   course_id: string;
   participant_id: string;
-  assignment1?: number;
-  assignment2?: number;
-  assignment3?: number;
-  exam?: number;
-  final_grades?: number;
+  //* below should be handle conversion by controllers into numeric values
+  assignment1: string;
+  assignment2: string;
+  assignment3: string;
+  exam: string;
+  final_grades?: string;
 };
 
-export { Participant, Course, Course_Participant };
+//! maybe wrong, based on what appear in the console onky
+// use errno as the logic gate
+interface MySQLErr extends Error {
+  code?: string;
+  errno?: number;
+  sqlState?: string;
+  sqlMessage?: string;
+}
+
+// used by mysqlErrorHdlr() only
+//TODO not ok atm, as what used is an Arr contains props of these 3
+type EntryInfo = Participant | Course | Course_Participant;
+
+//TODO delete this when fix the above TODO
+type BadEntryInfo = [];
+
+export { Participant, Course, Course_Participant, MySQLErr, EntryInfo };

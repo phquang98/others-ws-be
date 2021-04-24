@@ -1,10 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
 
-import logging from "../config/logging";
-import { dbOps, PromisablePoolCXN as pool } from "../config/mysql";
-import { xlsxQueryConstructor } from "../middlewares/upload";
-import { Participant } from "../models/types";
+import logging from "../helpers/logging";
+import { dbOps, PromisablePoolCXN as pool } from "../helpers/mysql";
 
 const NAMESPACE = "App";
 

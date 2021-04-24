@@ -1,6 +1,6 @@
 import express from "express";
 
-import { getListMdlwr } from "../middlewares/";
+import { getListMdlwr } from "../middlewares";
 import { uploadXlsxDataToDB } from "../controllers/upload";
 import {
   getListRACompatible,

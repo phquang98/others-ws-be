@@ -43,6 +43,7 @@ Practice example using TS + NodeJS + Express + MySQL
 - dwl `ra-data-simple-rest` to know how to write a Data Provider for RA, del later
 - to comply with RA `getOne`, hacky by take only the first `BinaryRow` from `mysql`, then hack it with JSON to pure `Array<TResource>` so that return result is only an obj
   - see <https://github.com/mysqljs/mysql/issues/1899>
+- when reading the doc, though BE must returns sth like `Promise<Error>` with prop `message`, but for some reason, return only status code out of 200-300 range and `message` prop is good enough for ra-data-json-server can detect it
 
 ## Fake SQL
 

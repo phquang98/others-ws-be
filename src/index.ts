@@ -1,12 +1,12 @@
 import express from "express";
-import raRest from "ra-data-simple-rest";
 import cors from "cors";
 
-import logging from "./config/logging";
-import config from "./config/config";
+import logging from "./helpers/logging";
+import config from "./helpers/config";
 import { participantRouter } from "./routes/participant";
 import { topLog, notExisted } from "./middlewares";
 import { courseRouter } from "./routes/course";
+import { course_partRouter } from "./routes/course_participant";
 
 const app = express();
 
@@ -20,6 +20,7 @@ app.use(cors());
 
 app.use("/participant", participantRouter);
 app.use("/course", courseRouter);
+app.use("/course_participant", course_partRouter);
 
 //* --- Error Middlewares ---
 

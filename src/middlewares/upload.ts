@@ -1,5 +1,5 @@
 import xlsx, { ParsingOptions, Sheet2JSONOpts } from "xlsx";
-import logging from "../config/logging";
+import logging from "../helpers/logging";
 
 import { Participant } from "../models/types";
 
@@ -33,9 +33,13 @@ const xlsxQueryConstructor = (data: Participant[]): Promise<string> => {
   // logging.info("UPLOAD", "From Excel:", data);
   data.map((ele, index) => {
     if (index === 0) {
-      queryValues += `( "${ele.first_name}", "${ele.last_name}", "${ele.participant_id}", "${ele.dob}", "${ele.email}")`;
+      queryValues += `( "${Number(ele.id)}", "${ele.first_name}", "${ele.last_name}", "${ele.participant_id}", "${
+        ele.dob
+      }", "${ele.email}")`;
     } else {
-      queryValues += `, ( "${ele.first_name}", "${ele.last_name}", "${ele.participant_id}", "${ele.dob}", "${ele.email}")`;
+      queryValues += `, ( "${Number(ele.id)}", "${ele.first_name}", "${ele.last_name}", "${ele.participant_id}", "${
+        ele.dob
+      }", "${ele.email}")`;
     }
   });
   queryValues += ";";

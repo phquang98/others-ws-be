@@ -2,17 +2,16 @@ import { Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
 
 import logging from "../helpers/logging";
-import { dbOps, PromisablePoolCXN as pool } from "../helpers/mysql";
-import { xlsxQueryConstructor } from "../middlewares/upload";
-import { MySQLErr, Participant } from "../models/types";
-import { mysqlErrorHdlr } from "../helpers/common";
+import { Course_Participant as PointKV, MySQLErr } from "../models/types";
+import { PromisablePoolCXN as pool } from "../helpers/mysql";
+import { calculateFinalGrades, mysqlErrorHdlr } from "../helpers/common";
 
 //* Variables
 
-const NAMESPACE = "CONTROLLERS/PART";
+const NAMESPACE = "CONTROLLERS/COURSE_PART";
 
 dotenv.config();
-const tbl = process.env.MYSQL_TBL_1;
+const tbl = process.env.MYSQL_TBL_3; //
 
 type ReqParams = {
   id?: number;
@@ -25,24 +24,23 @@ type ReqQuery = {
   _sort?: string;
   _start?: string;
   id?: string;
-  // custom
-  last_name?: string;
+  // custom, usually people use their name to find all their points
+  participant_id?: string;
 };
 
 //* Methods
-
-const getListRACompatible = (req: Request<{}, {}, {}, ReqQuery>, res: Response<Participant[]>, next: NextFunction) => {
+const getListRACompatible = (req: Request<{}, {}, {}, ReqQuery>, res: Response<PointKV[]>, next: NextFunction) => {
   let query = `SELECT * FROM ${tbl} ORDER BY ${req.query._sort} ${req.query._order}`;
   const fishingQuery = req.query;
-  let searchQuery = `SELECT * FROM ${tbl} WHERE last_name="${req.query.last_name}"`;
+  let searchQuery = `SELECT * FROM ${tbl} WHERE participant_id="${req.query.participant_id}"`;
 
-  if (req.query.last_name) {
-    logging.info(NAMESPACE, `getList?last_name`, { reqParams: req.params, reqQuery: fishingQuery });
+  if (req.query.participant_id) {
+    logging.info(NAMESPACE, `getList?pointWho`, { reqParams: req.params, reqQuery: fishingQuery });
     pool
       .execute(searchQuery)
       .then((queryRes) => {
         const [rows, fields] = queryRes;
-        const getListRes: Array<Participant> = JSON.parse(JSON.stringify(rows));
+        const getListRes: Array<PointKV> = JSON.parse(JSON.stringify(rows));
         return res.status(200).json(getListRes);
       })
       .catch((queryErr) => {
@@ -54,7 +52,7 @@ const getListRACompatible = (req: Request<{}, {}, {}, ReqQuery>, res: Response<P
       .execute(query)
       .then((queryRes) => {
         const [rows, fields] = queryRes;
-        const getListRes: Array<Participant> = JSON.parse(JSON.stringify(rows));
+        const getListRes: Array<PointKV> = JSON.parse(JSON.stringify(rows));
         return res.status(200).json(getListRes);
       })
       .catch((queryErr) => {
@@ -63,7 +61,7 @@ const getListRACompatible = (req: Request<{}, {}, {}, ReqQuery>, res: Response<P
   }
 };
 
-const getOneRACompatible = (req: Request<ReqParams>, res: Response<Participant>, next: NextFunction) => {
+const getOneRACompatible = (req: Request<ReqParams>, res: Response<PointKV>, next: NextFunction) => {
   let query = `SELECT * FROM ${tbl} WHERE id = ? `;
   let escapeValues = [req.params.id];
 
@@ -72,7 +70,7 @@ const getOneRACompatible = (req: Request<ReqParams>, res: Response<Participant>,
     .then((queryRes) => {
       logging.info(NAMESPACE, `getOne`, req.params);
       const [rows, fields] = queryRes;
-      const getOneRes: Participant[] = JSON.parse(JSON.stringify(rows));
+      const getOneRes: PointKV[] = JSON.parse(JSON.stringify(rows));
       return res.status(200).json(getOneRes[0]);
     })
     .catch((queryErr) => {
@@ -81,19 +79,28 @@ const getOneRACompatible = (req: Request<ReqParams>, res: Response<Participant>,
 };
 
 const createAndGetOneRACompatible = (
-  req: Request<ReqParams, {}, Participant>,
-  res: Response<Participant>,
+  req: Request<ReqParams, {}, PointKV>,
+  res: Response<PointKV>,
   next: NextFunction
 ) => {
-  let createQuery = `INSERT INTO ${tbl} (id, first_name, last_name, participant_id, dob, email) 
-  VALUES (?, ?, ?, ?, ?, ?)`;
+  let createQuery = `INSERT INTO ${tbl} (id, course_id, participant_id, assignment_1, assignment_2, assignment_3, exam, final_grades) 
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+  const finalGrades = calculateFinalGrades([
+    Number(req.body.assignment1),
+    Number(req.body.assignment2),
+    Number(req.body.assignment3),
+    Number(req.body.exam),
+  ]);
+  // const finalGrades = 9;
   let createEscapeValues = [
     req.body.id,
-    req.body.first_name,
-    req.body.last_name,
+    req.body.course_id,
     req.body.participant_id,
-    req.body.dob,
-    req.body.email,
+    Number(req.body.assignment1),
+    Number(req.body.assignment2),
+    Number(req.body.assignment3),
+    Number(req.body.exam),
+    finalGrades,
   ];
   const getQuery = `SELECT * FROM ${tbl} WHERE id = ? `;
   const getEscapeValues = [req.body.id];
@@ -101,13 +108,13 @@ const createAndGetOneRACompatible = (
   pool
     .execute(createQuery, createEscapeValues)
     .then(() => {
-      logging.info(NAMESPACE, `create`, req.body);
+      logging.info(NAMESPACE, `create`, { obj: createEscapeValues, finalGrades });
       pool
         .execute(getQuery, getEscapeValues)
         .then((queryRes) => {
           logging.info(NAMESPACE, `getOne`, req.params);
           const [rows, fields] = queryRes;
-          const createRes: Participant[] = JSON.parse(JSON.stringify(rows));
+          const createRes: PointKV[] = JSON.parse(JSON.stringify(rows));
           return res.status(200).json(createRes[0]);
         })
         .catch((queryErr) => {
@@ -115,23 +122,29 @@ const createAndGetOneRACompatible = (
         });
     })
     .catch((queryErr: MySQLErr) => {
-      logging.error(NAMESPACE, queryErr.message, queryErr);
+      logging.error(NAMESPACE, queryErr.message, { queErr: queryErr, obj: createEscapeValues });
       mysqlErrorHdlr(queryErr, res);
     });
 };
 
 const updateAndGetOneRACompatible = (
-  req: Request<ReqParams, {}, Participant>,
-  res: Response<Participant>,
+  req: Request<ReqParams, {}, PointKV>,
+  res: Response<PointKV>,
   next: NextFunction
 ) => {
-  let updateQuery = `UPDATE ${tbl} SET first_name = ?, last_name = ?, participant_id = ?, dob = ?, email = ? WHERE id = ?`;
+  let updateQuery = `UPDATE ${tbl} SET assignment_1 = ?, assignment_2 = ?, assignment_3 = ?, exam = ?, final_grades = ? WHERE id = ?`;
+  const finalGrades = calculateFinalGrades([
+    Number(req.body.assignment1),
+    Number(req.body.assignment2),
+    Number(req.body.assignment3),
+    Number(req.body.exam),
+  ]);
   let updateEscapeValues = [
-    req.body.first_name,
-    req.body.last_name,
-    req.body.participant_id,
-    req.body.dob.slice(0, 10), //
-    req.body.email,
+    Number(req.body.assignment1),
+    Number(req.body.assignment2),
+    Number(req.body.assignment3),
+    Number(req.body.exam),
+    finalGrades,
     req.params.id,
   ];
   const getQuery = `SELECT * FROM ${tbl} WHERE id = ? `;
@@ -140,13 +153,13 @@ const updateAndGetOneRACompatible = (
   pool
     .execute(updateQuery, updateEscapeValues)
     .then(() => {
-      logging.info(NAMESPACE, `update`, req.body);
+      logging.info(NAMESPACE, `update`, { obj: updateEscapeValues, finalGrades });
       pool
         .execute(getQuery, getEscapeValues)
         .then((queryRes) => {
           logging.info(NAMESPACE, `getOne`, req.params);
           const [rows, fields] = queryRes;
-          const updateRes: Participant[] = JSON.parse(JSON.stringify(rows));
+          const updateRes: PointKV[] = JSON.parse(JSON.stringify(rows));
           return res.status(200).json(updateRes[0]);
         })
         .catch((queryErr) => {
@@ -158,19 +171,19 @@ const updateAndGetOneRACompatible = (
     });
 };
 
-const getOneAndDeleteRACompatible = (req: Request<ReqParams>, res: Response<Participant>, next: NextFunction) => {
+const getOneAndDeleteRACompatible = (req: Request<ReqParams>, res: Response<PointKV>, next: NextFunction) => {
   const getQuery = `SELECT * FROM ${tbl} WHERE id = ? `;
   const getEscapeValues = [req.params.id];
   let deleteQuery = `DELETE FROM ${tbl} WHERE id = ?`;
   let deleteEscapeValues = [req.params.id];
-  let deleteRes: Participant[];
+  let deleteRes: PointKV[];
 
   pool
-    .execute(getQuery, getEscapeValues) //
+    .execute(getQuery, getEscapeValues)
     .then((queryRes) => {
       logging.info(NAMESPACE, `getOne from delete`, req.params);
       const [rows, fields] = queryRes;
-      deleteRes = JSON.parse(JSON.stringify(rows)); // retain the entity to return to FE later
+      deleteRes = JSON.parse(JSON.stringify(rows));
       pool
         .execute(deleteQuery, deleteEscapeValues)
         .then((queryRes) => {

@@ -1,10 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
 
-import logging from "../config/logging";
-import { dbOps } from "../config/mysql";
-import { extractDataFromXlsx, xlsxQueryConstructor } from "../middlewares/upload";
-import { Participant } from "../models/types";
+import logging from "../helpers/logging";
+import { dbOps } from "../helpers/mysql";
+import { xlsxQueryConstructor } from "../middlewares/upload";
+import { MySQLErr, Participant } from "../models/types";
+import { mysqlErrorHdlr } from "../helpers/common";
 
 const NAMESPACE = "CONTROLLERS";
 
@@ -26,7 +27,7 @@ const uploadDataToServer = (req: Request<{}, {}, ResBody>, res: Response, next: 
 // maybe SQL injection vulnerable here
 const uploadXlsxDataToDB = async (req: Request<{}, {}, Participant[]>, res: Response, next: NextFunction) => {
   let queryValues = await xlsxQueryConstructor(req.body);
-  let query = `INSERT INTO ${tbl} (first_name, last_name, participant_id, dob, email) VALUES ${queryValues}`;
+  let query = `INSERT INTO ${tbl} (id, first_name, last_name, participant_id, dob, email) VALUES ${queryValues}`;
   console.log(query);
 
   dbOps(query)
@@ -35,8 +36,9 @@ const uploadXlsxDataToDB = async (req: Request<{}, {}, Participant[]>, res: Resp
       const [rows, fields] = queryRes; // only cares about the row data -> arr destrct
       return res.status(200).json({ msg: `The data from Excel has been uploaded to the DB.` });
     })
-    .catch((queryErr) => {
+    .catch((queryErr: MySQLErr) => {
       logging.error(NAMESPACE, queryErr.message, queryErr);
+      mysqlErrorHdlr(queryErr, res);
     });
 };
 
