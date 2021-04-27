@@ -7,6 +7,7 @@ import { participantRouter } from "./routes/participant";
 import { topLog, notExisted } from "./middlewares";
 import { courseRouter } from "./routes/course";
 import { course_partRouter } from "./routes/course_participant";
+import { newCalFinalGrades } from "./helpers/common";
 
 const app = express(); //
 
@@ -31,3 +32,5 @@ app.use(notExisted);
 app.listen(config.server.port, () =>
   logging.info(`App`, `Server running on ${config.server.hostname}:${config.server.port}`)
 );
+
+// console.log(newCalFinalGrades([3, 10, 10, 10], [10, 20, 30, 40, 50]));

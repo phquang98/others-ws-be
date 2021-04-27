@@ -66,4 +66,4 @@ const mysqlErrorHdlr = (queryErr: MySQLErr, res: Response) => {
   }
 };
 
-export { calculateFinalGrades, mysqlErrorHdlr };
+export { calculateFinalGrades, mysqlErrorHdlr, newCalFinalGrades };
