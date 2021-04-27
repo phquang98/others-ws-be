@@ -8,7 +8,7 @@ import { topLog, notExisted } from "./middlewares";
 import { courseRouter } from "./routes/course";
 import { course_partRouter } from "./routes/course_participant";
 
-const app = express();
+const app = express(); //
 
 //* --- Top Lv Middlewares ---
 

@@ -41,7 +41,6 @@ interface MySQLErr extends Error {
 //TODO not ok atm, as what used is an Arr contains props of these 3
 type EntryInfo = Participant | Course | Course_Participant;
 
-//TODO delete this when fix the above TODO
-type BadEntryInfo = [];
+type Interval = [number, number, number, number, number];
 
-export { Participant, Course, Course_Participant, MySQLErr, EntryInfo };
+export { Participant, Course, Course_Participant, MySQLErr, EntryInfo, Interval };

@@ -1,11 +1,28 @@
 import { Response } from "express";
 
-import { EntryInfo, MySQLErr, Participant } from "../models/types";
+import { MySQLErr, Interval } from "../models/types";
 
 const calculateFinalGrades = (coef1Tests: number[], coef2Tests?: number[], coef3Tests?: number[]) => {
   const divisor = coef1Tests.length;
   const totalSum = coef1Tests.reduce((accum, curVal) => accum + curVal);
   return (totalSum / divisor).toFixed(3);
+};
+
+const newCalFinalGrades = (ptArr: number[], interval: Interval): number => {
+  const total = ptArr.reduce((accum, curVal) => accum + curVal);
+  if (total < interval[0]) {
+    return 0;
+  } else if (total > interval[0] && total < interval[1]) {
+    return 1;
+  } else if (total > interval[1] && total < interval[2]) {
+    return 2;
+  } else if (total > interval[2] && total < interval[3]) {
+    return 3;
+  } else if (total > interval[3] && total < interval[4]) {
+    return 4;
+  } else {
+    return 5;
+  }
 };
 
 enum MySQLErrorNum {
