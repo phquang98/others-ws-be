@@ -1,7 +1,7 @@
 import express from "express";
 
 import { getListMdlwr } from "../middlewares";
-import { uploadXlsxDataToDB } from "../controllers/upload";
+import { uploadToTbl, uploadToRelationTbl } from "../controllers/upload";
 import {
   getListRACompatible,
   getOneRACompatible,
@@ -19,7 +19,7 @@ participantRouter.get("/:id", getOneRACompatible);
 
 // --- POST ---
 participantRouter.post("/", createAndGetOneRACompatible);
-participantRouter.post("/upload", uploadXlsxDataToDB);
+participantRouter.post("/upload", uploadToTbl, uploadToRelationTbl);
 
 // --- PUT ---
 participantRouter.put("/:id", updateAndGetOneRACompatible);

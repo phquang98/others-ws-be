@@ -1,45 +1,55 @@
 import { Request, Response, NextFunction } from "express";
-import dotenv from "dotenv";
 
 import logging from "../helpers/logging";
-import { dbOps } from "../helpers/mysql";
-import { xlsxQueryConstructor } from "../middlewares/upload";
-import { MySQLErr, Participant } from "../models/types";
+import { PromisablePoolCXN as pool } from "../helpers/mysql";
+import { Participant } from "../models/types";
 import { mysqlErrorHdlr } from "../helpers/common";
+import { queryCnstrct } from "../helpers/upload";
 
-const NAMESPACE = "CONTROLLERS";
-
-dotenv.config();
-const tbl = process.env.MYSQL_TBL_1;
+const NAMESPACE = "CONTROLLERS/UPLOAD";
 
 type ResBody = {
   dataFromExcel: Participant[];
 };
 
-const uploadDataToServer = (req: Request<{}, {}, ResBody>, res: Response, next: NextFunction) => {
-  if (req.body.dataFromExcel) {
-    return res.status(200).json({ msg: `Extract from Excel OK!` });
-  } else {
-    return res.status(200).json({ msg: `Nothing!` });
-  }
-};
+// First, upload data to part
+const uploadToTbl = async (
+  req: Request<{}, {}, { xlsxData: Participant[]; registeringCourseId: string }>,
+  res: Response,
+  next: NextFunction
+) => {
+  let [frstQuery, dontCare] = await queryCnstrct(req.body.registeringCourseId, req.body.xlsxData);
 
-// maybe SQL injection vulnerable here
-const uploadXlsxDataToDB = async (req: Request<{}, {}, Participant[]>, res: Response, next: NextFunction) => {
-  let queryValues = await xlsxQueryConstructor(req.body);
-  let query = `INSERT INTO ${tbl} (id, first_name, last_name, participant_id, dob, email) VALUES ${queryValues}`;
-  console.log(query);
-
-  dbOps(query)
+  pool
+    .execute(frstQuery)
     .then((queryRes) => {
-      logging.info(NAMESPACE, `Connected to DB OK`);
-      const [rows, fields] = queryRes; // only cares about the row data -> arr destrct
-      return res.status(200).json({ msg: `The data from Excel has been uploaded to the DB.` });
+      logging.info(NAMESPACE, `upload`, { data: req.body.registeringCourseId, course: req.body.xlsxData });
+      next();
     })
-    .catch((queryErr: MySQLErr) => {
-      logging.error(NAMESPACE, queryErr.message, queryErr);
+    .catch((queryErr) => {
+      logging.error(NAMESPACE, "1st part", queryErr);
       mysqlErrorHdlr(queryErr, res);
     });
 };
 
-export { uploadXlsxDataToDB };
+// Second, upload data to course_part
+const uploadToRelationTbl = async (
+  req: Request<{}, {}, { xlsxData: Participant[]; registeringCourseId: string }>,
+  res: Response,
+  next: NextFunction
+) => {
+  let [dontCare, scndQuery] = await queryCnstrct(req.body.registeringCourseId, req.body.xlsxData);
+
+  pool
+    .execute(scndQuery)
+    .then((queryRes) => {
+      logging.info(NAMESPACE, `upload`, { data: req.body.registeringCourseId, course: req.body.xlsxData });
+      return res.status(200).json({ msg: `The data from Excel has been uploaded to the DB.` });
+    })
+    .catch((queryErr) => {
+      logging.error(NAMESPACE, "2nd part", queryErr);
+      mysqlErrorHdlr(queryErr, res);
+    });
+};
+
+export { uploadToTbl, uploadToRelationTbl };

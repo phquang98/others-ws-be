@@ -1,19 +1,14 @@
 type Participant = {
-  id: number;
+  id: string;
   first_name: string;
   last_name: string;
-  participant_id: string;
   dob: string;
   email: string;
 };
 
 type Course = {
-  id: number;
-  course_id: string;
+  id: string;
   course_title: string;
-  course_description?: string;
-  date_started: string;
-  date_ended: string;
 };
 
 type Course_Participant = {

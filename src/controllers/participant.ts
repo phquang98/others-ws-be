@@ -2,8 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
 
 import logging from "../helpers/logging";
-import { dbOps, PromisablePoolCXN as pool } from "../helpers/mysql";
-import { xlsxQueryConstructor } from "../middlewares/upload";
+import { PromisablePoolCXN as pool } from "../helpers/mysql";
 import { MySQLErr, Participant } from "../models/types";
 import { mysqlErrorHdlr } from "../helpers/common";
 
@@ -15,7 +14,7 @@ dotenv.config();
 const tbl = process.env.MYSQL_TBL_1;
 
 type ReqParams = {
-  id?: number;
+  id: string;
 };
 
 type ReqQuery = {
@@ -85,16 +84,9 @@ const createAndGetOneRACompatible = (
   res: Response<Participant>,
   next: NextFunction
 ) => {
-  let createQuery = `INSERT INTO ${tbl} (id, first_name, last_name, participant_id, dob, email) 
-  VALUES (?, ?, ?, ?, ?, ?)`;
-  let createEscapeValues = [
-    req.body.id,
-    req.body.first_name,
-    req.body.last_name,
-    req.body.participant_id,
-    req.body.dob,
-    req.body.email,
-  ];
+  let createQuery = `INSERT INTO ${tbl} (id, first_name, last_name, dob, email) 
+  VALUES (?, ?, ?, ?, ?)`;
+  let createEscapeValues = [req.body.id, req.body.first_name, req.body.last_name, req.body.dob, req.body.email];
   const getQuery = `SELECT * FROM ${tbl} WHERE id = ? `;
   const getEscapeValues = [req.body.id];
 
@@ -125,11 +117,10 @@ const updateAndGetOneRACompatible = (
   res: Response<Participant>,
   next: NextFunction
 ) => {
-  let updateQuery = `UPDATE ${tbl} SET first_name = ?, last_name = ?, participant_id = ?, dob = ?, email = ? WHERE id = ?`;
+  let updateQuery = `UPDATE ${tbl} SET first_name = ?, last_name = ?, dob = ?, email = ? WHERE id = ?`;
   let updateEscapeValues = [
     req.body.first_name,
     req.body.last_name,
-    req.body.participant_id,
     req.body.dob.slice(0, 10), //
     req.body.email,
     req.params.id,
@@ -166,7 +157,7 @@ const getOneAndDeleteRACompatible = (req: Request<ReqParams>, res: Response<Part
   let deleteRes: Participant[];
 
   pool
-    .execute(getQuery, getEscapeValues) //
+    .execute(getQuery, getEscapeValues)
     .then((queryRes) => {
       logging.info(NAMESPACE, `getOne from delete`, req.params);
       const [rows, fields] = queryRes;

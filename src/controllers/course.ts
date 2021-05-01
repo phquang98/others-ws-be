@@ -14,7 +14,7 @@ dotenv.config();
 const tbl = process.env.MYSQL_TBL_2;
 
 type ReqParams = {
-  id?: number;
+  id: string;
 };
 
 type ReqQuery = {
@@ -23,9 +23,7 @@ type ReqQuery = {
   _order?: "ASC" | "DESC";
   _sort?: string;
   _start?: string;
-  id?: string;
-  // custom
-  course_id?: string;
+  id: string;
 };
 
 //* Methods
@@ -33,9 +31,9 @@ type ReqQuery = {
 const getListRACompatible = (req: Request<{}, {}, {}, ReqQuery>, res: Response<Course[]>, next: NextFunction) => {
   let query = `SELECT * FROM ${tbl} ORDER BY ${req.query._sort} ${req.query._order}`;
   const fishingQuery = req.query;
-  let searchQuery = `SELECT * FROM ${tbl} WHERE course_id="${req.query.course_id}"`;
+  let searchQuery = `SELECT * FROM ${tbl} WHERE id="${req.query.id}"`;
 
-  if (req.query.course_id) {
+  if (req.query.id) {
     logging.info(NAMESPACE, `getList?course_id`, { reqParams: req.params, reqQuery: fishingQuery });
     pool
       .execute(searchQuery)
@@ -80,16 +78,9 @@ const getOneRACompatible = (req: Request<ReqParams>, res: Response<Course>, next
 };
 
 const createAndGetOneRACompatible = (req: Request<ReqParams, {}, Course>, res: Response, next: NextFunction) => {
-  let createQuery = `INSERT INTO ${tbl} (id, course_id, course_title, course_description, date_started, date_ended) 
-  VALUES (?, ?, ?, ?, ?, ?)`;
-  let createEscapeValues = [
-    req.body.id,
-    req.body.course_id,
-    req.body.course_title,
-    req.body.course_description,
-    req.body.date_started.slice(0, 10),
-    req.body.date_ended.slice(0, 10),
-  ];
+  let createQuery = `INSERT INTO ${tbl} (id, course_title) 
+  VALUES (?, ?)`;
+  let createEscapeValues = [req.body.id, req.body.course_title];
   const getQuery = `SELECT * FROM ${tbl} WHERE id = ? `;
   const getEscapeValues = [req.body.id];
 
@@ -120,15 +111,8 @@ const updateAndGetOneRACompatible = (
   res: Response<Course>,
   next: NextFunction
 ) => {
-  let updateQuery = `UPDATE ${tbl} SET course_id = ?, course_title = ?, course_description = ?, date_started = ?, date_ended = ? WHERE id = ?`;
-  let updateEscapeValues = [
-    req.body.course_id,
-    req.body.course_title,
-    req.body.course_description,
-    req.body.date_started.slice(0, 10), //
-    req.body.date_ended.slice(0, 10),
-    req.params.id,
-  ];
+  let updateQuery = `UPDATE ${tbl} SET course_title = ? WHERE id = ?`;
+  let updateEscapeValues = [req.body.course_title, req.params.id];
   const getQuery = `SELECT * FROM ${tbl} WHERE id = ? `;
   const getEscapeValues = [req.params.id];
 
