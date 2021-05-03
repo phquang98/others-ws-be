@@ -4,25 +4,6 @@ import logging from "../helpers/logging";
 import { Participant } from "../models/types";
 
 /**
- * Extract data from .xlsx files.
- * Props will be auto assigned based on cell row value + col name.
- */
-const extractDataFromXlsx = (filePath: string, sheetName: string): Participant[] => {
-  const excelParseOpts: ParsingOptions = {
-    cellDates: true, // ExcelDateFormat (5 nums) -> JSDateFormat
-  };
-
-  const sheet2JsonOpts: Sheet2JSONOpts = {
-    raw: false, // use formatted str, aka w prop
-  };
-
-  const workBook = xlsx.readFile(filePath, excelParseOpts);
-  const workSheet = workBook.Sheets[sheetName];
-  const dataDump: Participant[] = xlsx.utils.sheet_to_json(workSheet, sheet2JsonOpts);
-  return dataDump;
-};
-
-/**
  * Returns a query that can be used for multiple insertion to be the database.
  * Add it after the SQL `VALUES` keyword
  */
@@ -48,4 +29,4 @@ const xlsxQueryConstructor = (data: Participant[]): Promise<string> => {
   });
 };
 
-export { extractDataFromXlsx, xlsxQueryConstructor };
+export { xlsxQueryConstructor };

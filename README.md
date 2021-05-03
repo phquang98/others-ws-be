@@ -57,6 +57,12 @@ Practice example using TS + NodeJS + Express + MySQL
   - see <https://github.com/mysqljs/mysql/issues/1899>
 - when reading the doc, though BE must returns sth like `Promise<Error>` with prop `message`, but for some reason, return only status code out of 200-300 range and `message` prop is good enough for ra-data-json-server can detect it
 
+- solving User story Evaluate problem
+  - create a btn from basic RA btn
+  - using RR to redirect to the point page
+  - copy code from RA demo -> build query-string -> now FE can app customFilter prop to BE
+  - BE now handle that custom props -> show
+
 ## Fake SQL
 
 - default date format is YYYY-MM-DD

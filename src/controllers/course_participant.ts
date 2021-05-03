@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import logging from "../helpers/logging";
 import { Course_Participant as PointKV, MySQLErr } from "../models/types";
 import { PromisablePoolCXN as pool } from "../helpers/mysql";
-import { calculateFinalGrades, mysqlErrorHdlr } from "../helpers/common";
+import { calculateFinalGrades, newCalFinalGrades, mysqlErrorHdlr } from "../helpers/common";
 
 //* Variables
 
@@ -26,6 +26,7 @@ type ReqQuery = {
   id?: string;
   // custom, usually people use their name to find all their points
   participant_id?: string;
+  customFilter?: string;
 };
 
 //* Methods
@@ -38,6 +39,21 @@ const getListRACompatible = (req: Request<{}, {}, {}, ReqQuery>, res: Response<P
     logging.info(NAMESPACE, `getList?pointWho`, { reqParams: req.params, reqQuery: fishingQuery });
     pool
       .execute(searchQuery)
+      .then((queryRes) => {
+        const [rows, fields] = queryRes;
+        const getListRes: Array<PointKV> = JSON.parse(JSON.stringify(rows));
+        return res.status(200).json(getListRes);
+      })
+      .catch((queryErr) => {
+        logging.error(NAMESPACE, queryErr.message, queryErr);
+      });
+  } else if (req.query.customFilter) {
+    //! Lam au viet lai
+    let winningShit = `SELECT * FROM ${tbl} WHERE participant_id = ?`;
+    let shit = [req.query.customFilter];
+
+    pool
+      .execute(winningShit, shit)
       .then((queryRes) => {
         const [rows, fields] = queryRes;
         const getListRes: Array<PointKV> = JSON.parse(JSON.stringify(rows));
@@ -132,19 +148,24 @@ const updateAndGetOneRACompatible = (
   res: Response<PointKV>,
   next: NextFunction
 ) => {
-  let updateQuery = `UPDATE ${tbl} SET assignment_1 = ?, assignment_2 = ?, assignment_3 = ?, exam = ?, final_grades = ? WHERE id = ?`;
+  let updateQuery = `UPDATE ${tbl} SET assignment_1 = ?, assignment_2 = ?, assignment_3 = ?, exam = ?, grade = ? WHERE id = ?`;
   const finalGrades = calculateFinalGrades([
     Number(req.body.assignment1),
     Number(req.body.assignment2),
     Number(req.body.assignment3),
     Number(req.body.exam),
   ]);
+
+  const grade = newCalFinalGrades(
+    [Number(req.body.assignment1), Number(req.body.assignment2), Number(req.body.assignment3), Number(req.body.exam)],
+    [20, 40, 60, 80, 100]
+  );
   let updateEscapeValues = [
     Number(req.body.assignment1),
     Number(req.body.assignment2),
     Number(req.body.assignment3),
     Number(req.body.exam),
-    finalGrades,
+    grade,
     req.params.id,
   ];
   const getQuery = `SELECT * FROM ${tbl} WHERE id = ? `;
@@ -153,7 +174,7 @@ const updateAndGetOneRACompatible = (
   pool
     .execute(updateQuery, updateEscapeValues)
     .then(() => {
-      logging.info(NAMESPACE, `update`, { obj: updateEscapeValues, finalGrades });
+      logging.info(NAMESPACE, `update`, { obj: updateEscapeValues, grade });
       pool
         .execute(getQuery, getEscapeValues)
         .then((queryRes) => {
