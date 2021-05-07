@@ -101,23 +101,23 @@ const createAndGetOneRACompatible = (
 ) => {
   let createQuery = `INSERT INTO ${tbl} (id, course_id, participant_id, assignment_1, assignment_2, assignment_3, exam, grade) 
   VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-  const finalGrades = calculateFinalGrades([
-    Number(req.body.assignment1),
-    Number(req.body.assignment2),
-    Number(req.body.assignment3),
-    Number(req.body.exam),
-  ]);
+
   const grade = newCalFinalGrades(
-    [Number(req.body.assignment1), Number(req.body.assignment2), Number(req.body.assignment3), Number(req.body.exam)],
+    [
+      Number(req.body.assignment_1),
+      Number(req.body.assignment_2),
+      Number(req.body.assignment_3),
+      Number(req.body.exam),
+    ],
     [20, 40, 60, 80, 100]
   );
   let createEscapeValues = [
     req.body.id,
     req.body.course_id,
     req.body.participant_id,
-    Number(req.body.assignment1),
-    Number(req.body.assignment2),
-    Number(req.body.assignment3),
+    Number(req.body.assignment_1),
+    Number(req.body.assignment_2),
+    Number(req.body.assignment_3),
     Number(req.body.exam),
     grade,
   ];
@@ -152,21 +152,20 @@ const updateAndGetOneRACompatible = (
   next: NextFunction
 ) => {
   let updateQuery = `UPDATE ${tbl} SET assignment_1 = ?, assignment_2 = ?, assignment_3 = ?, exam = ?, grade = ? WHERE id = ?`;
-  const finalGrades = calculateFinalGrades([
-    Number(req.body.assignment1),
-    Number(req.body.assignment2),
-    Number(req.body.assignment3),
-    Number(req.body.exam),
-  ]);
 
   const grade = newCalFinalGrades(
-    [Number(req.body.assignment1), Number(req.body.assignment2), Number(req.body.assignment3), Number(req.body.exam)],
+    [
+      Number(req.body.assignment_1),
+      Number(req.body.assignment_2),
+      Number(req.body.assignment_3),
+      Number(req.body.exam),
+    ],
     [20, 40, 60, 80, 100]
   );
   let updateEscapeValues = [
-    Number(req.body.assignment1),
-    Number(req.body.assignment2),
-    Number(req.body.assignment3),
+    Number(req.body.assignment_1),
+    Number(req.body.assignment_2),
+    Number(req.body.assignment_3),
     Number(req.body.exam),
     grade,
     req.params.id,

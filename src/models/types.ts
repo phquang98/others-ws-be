@@ -16,9 +16,9 @@ type Course_Participant = {
   course_id: string;
   participant_id: string;
   //* below should be handle conversion by controllers into numeric values
-  assignment1: string;
-  assignment2: string;
-  assignment3: string;
+  assignment_1: string;
+  assignment_2: string;
+  assignment_3: string;
   exam: string;
   final_grades?: string;
 };
