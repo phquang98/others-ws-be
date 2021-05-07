@@ -99,7 +99,7 @@ const createAndGetOneRACompatible = (
   res: Response<PointKV>,
   next: NextFunction
 ) => {
-  let createQuery = `INSERT INTO ${tbl} (id, course_id, participant_id, assignment_1, assignment_2, assignment_3, exam, final_grades) 
+  let createQuery = `INSERT INTO ${tbl} (id, course_id, participant_id, assignment_1, assignment_2, assignment_3, exam, grade) 
   VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
   const finalGrades = calculateFinalGrades([
     Number(req.body.assignment1),
@@ -107,7 +107,10 @@ const createAndGetOneRACompatible = (
     Number(req.body.assignment3),
     Number(req.body.exam),
   ]);
-  // const finalGrades = 9;
+  const grade = newCalFinalGrades(
+    [Number(req.body.assignment1), Number(req.body.assignment2), Number(req.body.assignment3), Number(req.body.exam)],
+    [20, 40, 60, 80, 100]
+  );
   let createEscapeValues = [
     req.body.id,
     req.body.course_id,
@@ -116,7 +119,7 @@ const createAndGetOneRACompatible = (
     Number(req.body.assignment2),
     Number(req.body.assignment3),
     Number(req.body.exam),
-    finalGrades,
+    grade,
   ];
   const getQuery = `SELECT * FROM ${tbl} WHERE id = ? `;
   const getEscapeValues = [req.body.id];
@@ -124,7 +127,7 @@ const createAndGetOneRACompatible = (
   pool
     .execute(createQuery, createEscapeValues)
     .then(() => {
-      logging.info(NAMESPACE, `create`, { obj: createEscapeValues, finalGrades });
+      logging.info(NAMESPACE, `create`, { obj: createEscapeValues, grade });
       pool
         .execute(getQuery, getEscapeValues)
         .then((queryRes) => {
