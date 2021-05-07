@@ -1,7 +1,7 @@
 import express from "express";
 
 import { getListMdlwr } from "../middlewares";
-import { uploadToTbl, uploadToRelationTbl } from "../controllers/upload";
+import { uploadToTbl, uploadToRelationTbl, findOneEntry } from "../controllers/upload";
 import {
   getListRACompatible,
   getOneRACompatible,
@@ -19,7 +19,7 @@ participantRouter.get("/:id", getOneRACompatible);
 
 // --- POST ---
 participantRouter.post("/", createAndGetOneRACompatible);
-participantRouter.post("/upload", uploadToTbl, uploadToRelationTbl);
+participantRouter.post("/upload", uploadToTbl, findOneEntry, uploadToRelationTbl);
 
 // --- PUT ---
 participantRouter.put("/:id", updateAndGetOneRACompatible);

@@ -25,7 +25,7 @@ type ReqQuery = {
   _start?: string;
   id?: string;
   // custom, usually people use their name to find all their points
-  participant_id?: string;
+  course_id?: string;
   customFilter?: string;
 };
 
@@ -33,9 +33,9 @@ type ReqQuery = {
 const getListRACompatible = (req: Request<{}, {}, {}, ReqQuery>, res: Response<PointKV[]>, next: NextFunction) => {
   let query = `SELECT * FROM ${tbl} ORDER BY ${req.query._sort} ${req.query._order}`;
   const fishingQuery = req.query;
-  let searchQuery = `SELECT * FROM ${tbl} WHERE participant_id="${req.query.participant_id}"`;
+  let searchQuery = `SELECT * FROM ${tbl} WHERE course_id="${req.query.course_id}"`;
 
-  if (req.query.participant_id) {
+  if (req.query.course_id) {
     logging.info(NAMESPACE, `getList?pointWho`, { reqParams: req.params, reqQuery: fishingQuery });
     pool
       .execute(searchQuery)
