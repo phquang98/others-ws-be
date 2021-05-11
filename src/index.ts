@@ -30,7 +30,8 @@ app.use(notExisted);
 //* --- Entry point ---
 
 app.listen(config.server.port, () =>
-  logging.info(`App`, `Server running on ${config.server.hostname}:${config.server.port}`)
+  logging.info(
+    `App`,
+    `Server running on ${config.server.hostname}:${config.server.port}`
+  )
 );
-
-// console.log(newCalFinalGrades([10, 10, 10, 10, 10], [20, 40, 60, 80, 100]));

@@ -1,0 +1,57 @@
+{
+  "root": true,
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:node/recommended",
+    "plugin:import/errors",
+    "plugin:import/typescript",
+    "plugin:prettier/recommended",
+    "prettier"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "sourceType": "module",
+    "ecmaVersion": 6,
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "env": {
+    "es6": true,
+    "browser": true,
+    "node": true,
+    "jest": true
+  },
+  "settings": {
+    "import/extensions": [".js", ".jsx", ".ts", ".tsx"],
+    "import/parsers": {
+      "@typescript-eslint/parser": [".ts", ".tsx"]
+    },
+    "import/resolver": {
+      "node": {
+        "resolvePaths": ["node_modules/@types"],
+        "tryExtensions": [".js", ".json", ".ts", ".d.ts"],
+        "extensions": [".js", ".jsx", ".ts"]
+      }
+    }
+  },
+  "rules": {
+    "no-unused-vars": "warn",
+    "no-var": "warn",
+    "no-plusplus": ["error", { "allowForLoopAfterthoughts": true }],
+    "spaced-comment": "error",
+    "no-magic-numbers": ["warn", { "ignore": [0, 200, 404, 3000, 5000] }], // controversial
+    "eqeqeq": "error",
+    "node/no-missing-import": "off", // work around, and e-p-i also check this
+    "node/no-unsupported-features/es-syntax": [
+      "error",
+      { "ignores": ["modules"] }
+    ], // read README
+    "node/no-unpublished-import": ["warn"], // having problems with @types/morgan
+    "@typescript-eslint/explicit-function-return-type": ["warn"], // controversial
+    "@typescript-eslint/explicit-module-boundary-types": ["warn"], // controversial
+    "@typescript-eslint/no-explicit-any": ["off"], // controlversial
+    "prettier/prettier": ["warn", {}, { "usePrettierrc": true }]
+  }
+}
