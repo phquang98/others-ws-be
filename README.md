@@ -62,6 +62,7 @@ Practice example using TS + NodeJS + Express + MySQL
   - using RR to redirect to the point page
   - copy code from RA demo -> build query-string -> now FE can app customFilter prop to BE
   - BE now handle that custom props -> show
+- [cant have expressions when first create table](https://stackoverflow.com/questions/42942977/mysql-set-default-value-for-date-column-using-date-add)
 
 ## Fake SQL
 

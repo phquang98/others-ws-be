@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
 
 import logging from "../helpers/logging";
-import { Course_Participant as PointKV, MySQLErr } from "../models/types";
+import { Course, Course_Participant as PointKV, MySQLErr } from "../models/types";
 import { PromisablePoolCXN as pool } from "../helpers/mysql";
 import { calculateFinalGrades, newCalFinalGrades, mysqlErrorHdlr } from "../helpers/common";
 
@@ -11,7 +11,8 @@ import { calculateFinalGrades, newCalFinalGrades, mysqlErrorHdlr } from "../help
 const NAMESPACE = "CONTROLLERS/COURSE_PART";
 
 dotenv.config();
-const tbl = process.env.MYSQL_TBL_3; //
+const tbl = process.env.MYSQL_TBL_3;
+const courseTbl = process.env.MYSQL_TBL_2;
 
 type ReqParams = {
   id?: number;
@@ -99,42 +100,39 @@ const createAndGetOneRACompatible = (
   res: Response<PointKV>,
   next: NextFunction
 ) => {
-  let createQuery = `INSERT INTO ${tbl} (id, course_id, participant_id, assignment_1, assignment_2, assignment_3, exam, grade) 
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+  // const getIntrvlQuery = `SELECT * FROM ${courseTbl} WHERE id = ?`;
+  // const intrvlEscapeValues = [req.body.course_id];
 
-  const grade = newCalFinalGrades(
-    [
-      Number(req.body.assignment_1),
-      Number(req.body.assignment_2),
-      Number(req.body.assignment_3),
-      Number(req.body.exam),
-    ],
-    [20, 40, 60, 80, 100]
-  );
+  // let grade;
+
+  let createQuery = `INSERT INTO ${tbl} (course_id, participant_id, assignment_1, assignment_2, assignment_3, exam, grade) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+
   let createEscapeValues = [
-    req.body.id,
     req.body.course_id,
     req.body.participant_id,
     Number(req.body.assignment_1),
     Number(req.body.assignment_2),
     Number(req.body.assignment_3),
     Number(req.body.exam),
-    grade,
+    Number(res.locals.gradeNe),
   ];
+  // let cacDMM = ["CS100", "e258693", 10, 9, 8, 7, 0];
+
   const getQuery = `SELECT * FROM ${tbl} WHERE id = ? `;
   const getEscapeValues = [req.body.id];
 
+  logging.info(NAMESPACE, "2nd part", { createQuery, createEscapeValues });
   pool
     .execute(createQuery, createEscapeValues)
     .then(() => {
-      logging.info(NAMESPACE, `create`, { obj: createEscapeValues, grade });
       pool
         .execute(getQuery, getEscapeValues)
         .then((queryRes) => {
           logging.info(NAMESPACE, `getOne`, req.params);
           const [rows, fields] = queryRes;
           const createRes: PointKV[] = JSON.parse(JSON.stringify(rows));
-          return res.status(200).json(createRes[0]);
+          console.log(createRes[0]);
+          // return res.status(200).json(createRes[0]);
         })
         .catch((queryErr) => {
           logging.error(NAMESPACE, queryErr.message, queryErr);
@@ -144,6 +142,79 @@ const createAndGetOneRACompatible = (
       logging.error(NAMESPACE, queryErr.message, { queErr: queryErr, obj: createEscapeValues });
       mysqlErrorHdlr(queryErr, res);
     });
+
+  // logging.info(NAMESPACE, `1st part`, { course: req.body.course_id, rest: req.body });
+  // pool
+  //   .execute(getIntrvlQuery, intrvlEscapeValues)
+  //   .then((queryRes) => {
+  //     const [rows, fields] = queryRes;
+  //     const courseForGrade: Course[] = JSON.parse(JSON.stringify(rows));
+  //     const { grade1_interval, grade2_interval, grade3_interval, grade4_interval, grade5_interval } = courseForGrade[0];
+  //     grade = newCalFinalGrades(
+  //       [
+  //         Number(req.body.assignment_1),
+  //         Number(req.body.assignment_2),
+  //         Number(req.body.assignment_3),
+  //         Number(req.body.exam),
+  //       ],
+  //       [
+  //         Number(grade1_interval),
+  //         Number(grade2_interval),
+  //         Number(grade3_interval),
+  //         Number(grade4_interval),
+  //         Number(grade5_interval),
+  //       ]
+  //     );
+  //     createEscapeValues = [...createEscapeValues, grade];
+  //     logging.info(NAMESPACE, `tell me why ???`, {
+  //       grade,
+  //       rest: [req.body.assignment_1, req.body.assignment_2, req.body.assignment_3, req.body.exam],
+  //     });
+
+  //     logging.info(NAMESPACE, `create`, { createQuery, createEscapeValues });
+
+  //     pool
+  //       .execute(createQuery, cacDMM)
+  //       .then(() => {
+  //         pool
+  //           .execute(getQuery, getEscapeValues)
+  //           .then((queryRes) => {
+  //             logging.info(NAMESPACE, `getOne`, req.params);
+  //             const [rows, fields] = queryRes;
+  //             const createRes: PointKV[] = JSON.parse(JSON.stringify(rows));
+  //             console.log(createRes[0]);
+  //             // return res.status(200).json(createRes[0]);
+  //           })
+  //           .catch((queryErr) => {
+  //             logging.error(NAMESPACE, queryErr.message, queryErr);
+  //           });
+  //       })
+  //       .catch((queryErr: MySQLErr) => {
+  //         // logging.error(NAMESPACE, queryErr.message, { queErr: queryErr, obj: createEscapeValues });
+  //         mysqlErrorHdlr(queryErr, res);
+  //       });
+  //   })
+  //   .catch((queryErr: MySQLErr) => {
+  //     // logging.error(NAMESPACE, queryErr.message, { queErr: queryErr, obj: createEscapeValues });
+  //     mysqlErrorHdlr(queryErr, res);
+  //   });
+
+  // pool
+  //   .execute(createQuery, createEscapeValues)
+  //   .then(() => {
+  //     logging.info(NAMESPACE, `create`, { obj: createEscapeValues, grade });
+  //     pool
+  //       .execute(getQuery, getEscapeValues)
+  //       .then((queryRes) => {
+  //         logging.info(NAMESPACE, `getOne`, req.params);
+  //         const [rows, fields] = queryRes;
+  //         const createRes: PointKV[] = JSON.parse(JSON.stringify(rows));
+  //         return res.status(200).json(createRes[0]);
+  //       })
+  //       .catch((queryErr) => {
+  //         logging.error(NAMESPACE, queryErr.message, queryErr);
+  //       });
+  //   })
 };
 
 const updateAndGetOneRACompatible = (
@@ -172,6 +243,40 @@ const updateAndGetOneRACompatible = (
   ];
   const getQuery = `SELECT * FROM ${tbl} WHERE id = ? `;
   const getEscapeValues = [req.params.id];
+
+  // Retard code block start
+  const getIntrvlQuery = `SELECT * FROM ${courseTbl} WHERE id = ?`;
+  const intrvlEscapeValues = [req.body.course_id];
+
+  logging.info(NAMESPACE, `get interval`, { course: req.body.course_id, rest: req.body });
+  pool
+    .execute(getIntrvlQuery, intrvlEscapeValues)
+    .then((queryRes) => {
+      const [rows, fields] = queryRes;
+      const courseForGrade: Course[] = JSON.parse(JSON.stringify(rows));
+      const { grade1_interval, grade2_interval, grade3_interval, grade4_interval, grade5_interval } = courseForGrade[0];
+      const grade = newCalFinalGrades(
+        [
+          Number(req.body.assignment_1),
+          Number(req.body.assignment_2),
+          Number(req.body.assignment_3),
+          Number(req.body.exam),
+        ],
+        [
+          Number(grade1_interval),
+          Number(grade2_interval),
+          Number(grade3_interval),
+          Number(grade4_interval),
+          Number(grade5_interval),
+        ]
+      );
+      console.log("golden shit", grade);
+    })
+    .catch((queryErr) => {
+      logging.error(NAMESPACE, queryErr.message, queryErr);
+    });
+
+  // Retard code block end
 
   pool
     .execute(updateQuery, updateEscapeValues)
@@ -222,10 +327,48 @@ const getOneAndDeleteRACompatible = (req: Request<ReqParams>, res: Response<Poin
     });
 };
 
+const getIntrvl = (req: Request<ReqParams, {}, PointKV>, res: Response<PointKV>, next: NextFunction) => {
+  const getIntrvlQuery = `SELECT * FROM ${courseTbl} WHERE id = ?`;
+  const intrvlEscapeValues = [req.body.course_id];
+  let grade;
+
+  res.locals;
+
+  logging.info(NAMESPACE, `1st part`, { course: req.body.course_id, rest: req.body });
+  pool
+    .execute(getIntrvlQuery, intrvlEscapeValues)
+    .then((queryRes) => {
+      const [rows, fields] = queryRes;
+      const courseForGrade: Course[] = JSON.parse(JSON.stringify(rows));
+      const { grade1_interval, grade2_interval, grade3_interval, grade4_interval, grade5_interval } = courseForGrade[0];
+      grade = newCalFinalGrades(
+        [
+          Number(req.body.assignment_1),
+          Number(req.body.assignment_2),
+          Number(req.body.assignment_3),
+          Number(req.body.exam),
+        ],
+        [
+          Number(grade1_interval),
+          Number(grade2_interval),
+          Number(grade3_interval),
+          Number(grade4_interval),
+          Number(grade5_interval),
+        ]
+      );
+      res.locals = { gradeNe: grade };
+      next();
+    })
+    .catch((queryErr) => {
+      logging.error(NAMESPACE, queryErr.message, queryErr);
+    });
+};
+
 export {
   getListRACompatible,
   getOneRACompatible,
   createAndGetOneRACompatible,
   updateAndGetOneRACompatible,
   getOneAndDeleteRACompatible,
+  getIntrvl,
 };

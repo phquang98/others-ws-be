@@ -78,9 +78,20 @@ const getOneRACompatible = (req: Request<ReqParams>, res: Response<Course>, next
 };
 
 const createAndGetOneRACompatible = (req: Request<ReqParams, {}, Course>, res: Response, next: NextFunction) => {
-  let createQuery = `INSERT INTO ${tbl} (id, course_title) 
-  VALUES (?, ?)`;
-  let createEscapeValues = [req.body.id, req.body.course_title];
+  let createQuery = `INSERT INTO ${tbl} (id, course_title, date_started, date_ended, 
+grade1_interval, grade2_interval, grade3_interval, grade4_interval, grade5_interval)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  let createEscapeValues = [
+    req.body.id,
+    req.body.course_title,
+    req.body.date_started.slice(0, 10),
+    req.body.date_ended.slice(0, 10),
+    req.body.grade1_interval,
+    req.body.grade2_interval,
+    req.body.grade3_interval,
+    req.body.grade4_interval,
+    req.body.grade5_interval,
+  ];
   const getQuery = `SELECT * FROM ${tbl} WHERE id = ? `;
   const getEscapeValues = [req.body.id];
 
@@ -111,8 +122,27 @@ const updateAndGetOneRACompatible = (
   res: Response<Course>,
   next: NextFunction
 ) => {
-  let updateQuery = `UPDATE ${tbl} SET course_title = ? WHERE id = ?`;
-  let updateEscapeValues = [req.body.course_title, req.params.id];
+  let updateQuery = `UPDATE ${tbl} SET 
+  course_title = ?, 
+  date_started = ?, 
+  date_ended = ?, 
+  grade1_interval = ?, 
+  grade2_interval = ?, 
+  grade3_interval = ?,
+  grade4_interval = ?, 
+  grade5_interval = ? 
+  WHERE id = ?`;
+  let updateEscapeValues = [
+    req.body.course_title,
+    req.body.date_started.slice(0, 10),
+    req.body.date_ended.slice(0, 10),
+    req.body.grade1_interval,
+    req.body.grade2_interval,
+    req.body.grade3_interval,
+    req.body.grade4_interval,
+    req.body.grade5_interval,
+    req.params.id,
+  ];
   const getQuery = `SELECT * FROM ${tbl} WHERE id = ? `;
   const getEscapeValues = [req.params.id];
 
@@ -145,7 +175,7 @@ const getOneAndDeleteRACompatible = (req: Request<ReqParams>, res: Response<Cour
   let deleteRes: Course[];
 
   pool
-    .execute(getQuery, getEscapeValues) //
+    .execute(getQuery, getEscapeValues)
     .then((queryRes) => {
       logging.info(NAMESPACE, `getOne from delete`, req.params);
       const [rows, fields] = queryRes;

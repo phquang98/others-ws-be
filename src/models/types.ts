@@ -9,6 +9,13 @@ type Participant = {
 type Course = {
   id: string;
   course_title: string;
+  date_started: string;
+  date_ended: string;
+  grade1_interval: string;
+  grade2_interval: string;
+  grade3_interval: string;
+  grade4_interval: string;
+  grade5_interval: string;
 };
 
 type Course_Participant = {
@@ -20,7 +27,7 @@ type Course_Participant = {
   assignment_2: string;
   assignment_3: string;
   exam: string;
-  final_grades?: string;
+  grade?: string;
 };
 
 //! maybe wrong, based on what appear in the console onky

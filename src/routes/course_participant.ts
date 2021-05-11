@@ -7,6 +7,7 @@ import {
   createAndGetOneRACompatible,
   updateAndGetOneRACompatible,
   getOneAndDeleteRACompatible,
+  getIntrvl,
 } from "../controllers/course_participant";
 
 const course_partRouter = express.Router();
@@ -17,7 +18,7 @@ course_partRouter.get("/", getListMdlwr, getListRACompatible);
 course_partRouter.get("/:id", getOneRACompatible);
 
 // --- POST ---
-course_partRouter.post("/", createAndGetOneRACompatible);
+course_partRouter.post("/", getIntrvl, createAndGetOneRACompatible);
 
 // --- PUT ---
 course_partRouter.put("/:id", updateAndGetOneRACompatible);
