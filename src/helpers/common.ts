@@ -2,10 +2,38 @@ import { Response } from "express";
 
 import { MySQLErr, Interval } from "../models/types";
 
-const calculateFinalGrades = (coef1Tests: number[], coef2Tests?: number[], coef3Tests?: number[]) => {
+const calculateFinalGrades = (
+  coef1Tests: number[],
+  coef2Tests?: number[],
+  coef3Tests?: number[]
+) => {
   const divisor = coef1Tests.length;
   const totalSum = coef1Tests.reduce((accum, curVal) => accum + curVal);
   return (totalSum / divisor).toFixed(3);
+};
+
+/**
+ * Grade calculation algorithm\
+ * `usedAss`: the number of used assignments -> usedAss * 10 is the maximum points from assignments\
+ * `maxAssPart`: the constant that determined how much assignments are worth -> 100 - maxAssPart = maxExamPart\
+ * `assReal`: the amount of points from assignments, always < maxAssPart\
+ * `examReal`: the percentage amount of points from exam, from 0-100\
+ * `totalP`: points from assP and examP\
+ * `assP`: assReal/(usedAss * 10) * maxAssPart\
+ * `examP`: (examReal/100) * (100 - maxAssPart)\
+ * now use `totalP` -> compare to upper limit -> got grades
+ */
+const calTotalPoint = (
+  assPointClt: number[],
+  usedAss: number,
+  maxAssPart: number,
+  examReal: number
+) => {
+  const assReal = assPointClt.reduce((accum, curVal) => accum + curVal);
+  const assP = (assReal / (usedAss * 10)) * maxAssPart;
+  const examP = (examReal / 100) * (100 - maxAssPart);
+  const totalP = assP + examP;
+  return totalP;
 };
 
 const newCalFinalGrades = (ptArr: number[], interval: Interval): number => {
@@ -17,12 +45,12 @@ const newCalFinalGrades = (ptArr: number[], interval: Interval): number => {
   // exam: 9/10
   // total: 5 + 7 + 4 + 9 = 25/40 -> 60% -> grade 3
 
-  //! i give you 10 ass
-  //! teacher wants 7 ass -> max 70p tu ass
-  //! max baitap 30 -> max exam 70
-  //! 57p from ass -> 57/70 *30 = 24.42p/30p bai tap
-  //! 84% -> 84%* 70 = 58.8p tu exam
-  //! 24.42 + 58.8 = 83.22p / 100p
+  // ! i give you 10 ass
+  // ! teacher wants 7 ass -> max 70p tu ass
+  // ! max baitap 30 -> max exam 70
+  // ! 57p from ass -> 57/70 *30 = 24.42p/30p bai tap
+  // ! 84% -> 84%* 70 = 58.8p tu exam
+  // ! 24.42 + 58.8 = 83.22p / 100p
 
   // i give u 20 ass, igve 10
 
@@ -34,7 +62,7 @@ const newCalFinalGrades = (ptArr: number[], interval: Interval): number => {
   // total: 48p + 26.68p = 74.67p / 100p ->  grade from this data
 
   // teacher give 10 ass
-  //student returns 8 ass, total point 75
+  // student returns 8 ass, total point 75
   // student score 75/100 -> 75% * 40 = 30p
   // exam 60/100 -> 60% * 60 = 36p
   // final: 30 + 36 = 66p
@@ -74,10 +102,10 @@ const newCalFinalGrades = (ptArr: number[], interval: Interval): number => {
 
 enum MySQLErrorNum {
   DUPLICATE_ENTRY = 1062,
-  FOREIGN_KEY_NOT_EXISTED = 1452,
+  FOREIGN_KEY_NOT_EXISTED = 1452
 }
 
-//TODO continue writing this
+// TODO continue writing this
 // const cnstrctEntryInfo = <T extends EntryInfo>(entryArr: string[], typeToBe: string): T => {
 //   switch (typeToBe) {
 //     case "Participant":
@@ -104,13 +132,22 @@ enum MySQLErrorNum {
 const mysqlErrorHdlr = (queryErr: MySQLErr, res: Response) => {
   switch (queryErr.errno) {
     case MySQLErrorNum.DUPLICATE_ENTRY:
-      return res.status(409).json({ message: `Key value is duplicated. Please change key value.` });
+      return res
+        .status(409)
+        .json({ message: `Key value is duplicated. Please change key value.` });
     case MySQLErrorNum.FOREIGN_KEY_NOT_EXISTED:
-      return res.status(409).json({ message: `Key value not existed. Please change key value.` });
+      return res
+        .status(409)
+        .json({ message: `Key value not existed. Please change key value.` });
     default:
       console.log("Switch key value is empty!");
       return res.status(400).json({ message: `Some error has occured!` });
   }
 };
 
-export { calculateFinalGrades, mysqlErrorHdlr, newCalFinalGrades };
+export {
+  calculateFinalGrades,
+  mysqlErrorHdlr,
+  newCalFinalGrades,
+  calTotalPoint
+};

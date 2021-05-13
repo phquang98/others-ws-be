@@ -28,13 +28,20 @@ type ReqQuery = {
 
 //* Methods
 
-const getListRACompatible = (req: Request<{}, {}, {}, ReqQuery>, res: Response<Course[]>, next: NextFunction) => {
-  let query = `SELECT * FROM ${tbl} ORDER BY ${req.query._sort} ${req.query._order}`;
+const getListRACompatible = (
+  req: Request<unknown, unknown, unknown, ReqQuery>,
+  res: Response<Course[]>,
+  next: NextFunction
+) => {
+  const query = `SELECT * FROM ${tbl} ORDER BY ${req.query._sort} ${req.query._order}`;
   const fishingQuery = req.query;
-  let searchQuery = `SELECT * FROM ${tbl} WHERE id="${req.query.id}"`;
+  const searchQuery = `SELECT * FROM ${tbl} WHERE id="${req.query.id}"`;
 
   if (req.query.id) {
-    logging.info(NAMESPACE, `getList?course_id`, { reqParams: req.params, reqQuery: fishingQuery });
+    logging.info(NAMESPACE, `getList?course_id`, {
+      reqParams: req.params,
+      reqQuery: fishingQuery
+    });
     pool
       .execute(searchQuery)
       .then((queryRes) => {
@@ -46,7 +53,10 @@ const getListRACompatible = (req: Request<{}, {}, {}, ReqQuery>, res: Response<C
         logging.error(NAMESPACE, queryErr.message, queryErr);
       });
   } else {
-    logging.info(NAMESPACE, `getList`, { reqParams: req.params, reqQuery: fishingQuery });
+    logging.info(NAMESPACE, `getList`, {
+      reqParams: req.params,
+      reqQuery: fishingQuery
+    });
     pool
       .execute(query)
       .then((queryRes) => {
@@ -60,9 +70,13 @@ const getListRACompatible = (req: Request<{}, {}, {}, ReqQuery>, res: Response<C
   }
 };
 
-const getOneRACompatible = (req: Request<ReqParams>, res: Response<Course>, next: NextFunction) => {
-  let query = `SELECT * FROM ${tbl} WHERE id = ? `;
-  let escapeValues = [req.params.id];
+const getOneRACompatible = (
+  req: Request<ReqParams>,
+  res: Response<Course>,
+  next: NextFunction
+) => {
+  const query = `SELECT * FROM ${tbl} WHERE id = ? `;
+  const escapeValues = [req.params.id];
 
   pool
     .execute(query, escapeValues)
@@ -77,11 +91,15 @@ const getOneRACompatible = (req: Request<ReqParams>, res: Response<Course>, next
     });
 };
 
-const createAndGetOneRACompatible = (req: Request<ReqParams, {}, Course>, res: Response, next: NextFunction) => {
-  let createQuery = `INSERT INTO ${tbl} (id, course_title, date_started, date_ended, 
+const createAndGetOneRACompatible = (
+  req: Request<ReqParams, unknown, Course>,
+  res: Response,
+  next: NextFunction
+) => {
+  const createQuery = `INSERT INTO ${tbl} (id, course_title, date_started, date_ended, 
 grade1_interval, grade2_interval, grade3_interval, grade4_interval, grade5_interval)
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-  let createEscapeValues = [
+  const createEscapeValues = [
     req.body.id,
     req.body.course_title,
     req.body.date_started.slice(0, 10),
@@ -90,7 +108,7 @@ grade1_interval, grade2_interval, grade3_interval, grade4_interval, grade5_inter
     req.body.grade2_interval,
     req.body.grade3_interval,
     req.body.grade4_interval,
-    req.body.grade5_interval,
+    req.body.grade5_interval
   ];
   const getQuery = `SELECT * FROM ${tbl} WHERE id = ? `;
   const getEscapeValues = [req.body.id];
@@ -118,11 +136,11 @@ grade1_interval, grade2_interval, grade3_interval, grade4_interval, grade5_inter
 };
 
 const updateAndGetOneRACompatible = (
-  req: Request<ReqParams, {}, Course>,
+  req: Request<ReqParams, unknown, Course>,
   res: Response<Course>,
   next: NextFunction
 ) => {
-  let updateQuery = `UPDATE ${tbl} SET 
+  const updateQuery = `UPDATE ${tbl} SET 
   course_title = ?, 
   date_started = ?, 
   date_ended = ?, 
@@ -132,7 +150,7 @@ const updateAndGetOneRACompatible = (
   grade4_interval = ?, 
   grade5_interval = ? 
   WHERE id = ?`;
-  let updateEscapeValues = [
+  const updateEscapeValues = [
     req.body.course_title,
     req.body.date_started.slice(0, 10),
     req.body.date_ended.slice(0, 10),
@@ -141,7 +159,7 @@ const updateAndGetOneRACompatible = (
     req.body.grade3_interval,
     req.body.grade4_interval,
     req.body.grade5_interval,
-    req.params.id,
+    req.params.id
   ];
   const getQuery = `SELECT * FROM ${tbl} WHERE id = ? `;
   const getEscapeValues = [req.params.id];
@@ -167,11 +185,15 @@ const updateAndGetOneRACompatible = (
     });
 };
 
-const getOneAndDeleteRACompatible = (req: Request<ReqParams>, res: Response<Course>, next: NextFunction) => {
+const getOneAndDeleteRACompatible = (
+  req: Request<ReqParams>,
+  res: Response<Course>,
+  next: NextFunction
+) => {
   const getQuery = `SELECT * FROM ${tbl} WHERE id = ? `;
   const getEscapeValues = [req.params.id];
-  let deleteQuery = `DELETE FROM ${tbl} WHERE id = ?`;
-  let deleteEscapeValues = [req.params.id];
+  const deleteQuery = `DELETE FROM ${tbl} WHERE id = ?`;
+  const deleteEscapeValues = [req.params.id];
   let deleteRes: Course[];
 
   pool
@@ -200,5 +222,5 @@ export {
   getOneRACompatible,
   createAndGetOneRACompatible,
   updateAndGetOneRACompatible,
-  getOneAndDeleteRACompatible,
+  getOneAndDeleteRACompatible
 };

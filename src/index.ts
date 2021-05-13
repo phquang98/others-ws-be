@@ -7,7 +7,8 @@ import { participantRouter } from "./routes/participant";
 import { topLog, notExisted } from "./middlewares";
 import { courseRouter } from "./routes/course";
 import { course_partRouter } from "./routes/course_participant";
-import { newCalFinalGrades } from "./helpers/common";
+import { newCalFinalGrades, calTotalPoint } from "./helpers/common";
+import { pointRouter } from "./routes/point";
 
 const app = express(); //
 
@@ -21,7 +22,9 @@ app.use(cors());
 
 app.use("/participant", participantRouter);
 app.use("/course", courseRouter);
-app.use("/course_participant", course_partRouter);
+// app.use("/course_participant", course_partRouter);
+app.use("/course_participant", pointRouter);
+app.use("/point", pointRouter);
 
 //* --- Error Middlewares ---
 

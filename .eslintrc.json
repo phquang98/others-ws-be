@@ -37,11 +37,14 @@
     }
   },
   "rules": {
-    "no-unused-vars": "warn",
+    "no-unused-vars": "off",
     "no-var": "warn",
     "no-plusplus": ["error", { "allowForLoopAfterthoughts": true }],
     "spaced-comment": "error",
-    "no-magic-numbers": ["warn", { "ignore": [0, 200, 404, 3000, 5000] }], // controversial
+    "no-magic-numbers": [
+      "warn",
+      { "ignore": [0, 200, 400, 404, 409, 3000, 5000] }
+    ], // controversial
     "eqeqeq": "error",
     "node/no-missing-import": "off", // work around, and e-p-i also check this
     "node/no-unsupported-features/es-syntax": [
@@ -49,8 +52,8 @@
       { "ignores": ["modules"] }
     ], // read README
     "node/no-unpublished-import": ["warn"], // having problems with @types/morgan
-    "@typescript-eslint/explicit-function-return-type": ["warn"], // controversial
-    "@typescript-eslint/explicit-module-boundary-types": ["warn"], // controversial
+    "@typescript-eslint/explicit-function-return-type": ["off"], // controversial
+    "@typescript-eslint/explicit-module-boundary-types": ["off"], // controversial
     "@typescript-eslint/no-explicit-any": ["off"], // controlversial
     "prettier/prettier": ["warn", {}, { "usePrettierrc": true }]
   }
