@@ -27,7 +27,7 @@ const triggerQuery = async <
   namespaceLog: string,
   crudLog: string,
   query: string,
-  escapeValues?: (string | number)[]
+  escapeValues?: (string | number | undefined)[]
 ) => {
   try {
     logging.info(namespaceLog, crudLog, {

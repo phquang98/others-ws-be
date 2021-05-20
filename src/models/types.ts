@@ -12,11 +12,13 @@ type Course = {
   course_title: string;
   date_started: string;
   date_ended: string;
-  grade1_interval: string;
-  grade2_interval: string;
-  grade3_interval: string;
-  grade4_interval: string;
-  grade5_interval: string;
+  used_assignments: number;
+  max_assignment_point: string;
+  grade1_interval: number;
+  grade2_interval: number;
+  grade3_interval: number;
+  grade4_interval: number;
+  grade5_interval: number;
 };
 
 type Course_Participant = {
@@ -24,10 +26,17 @@ type Course_Participant = {
   course_id: string;
   participant_id: string;
   //* below should be handle conversion by controllers into numeric values
-  assignment_1: string;
-  assignment_2: string;
-  assignment_3: string;
-  exam: string;
+  assignment_1?: string | number;
+  assignment_2?: string | number;
+  assignment_3?: string | number;
+  assignment_4?: string | number;
+  assignment_5?: string | number;
+  assignment_6?: string | number;
+  assignment_7?: string | number;
+  assignment_8?: string | number;
+  assignment_9?: string | number;
+  assignment_10?: string | number;
+  exam: number;
   grade?: string | number;
 };
 

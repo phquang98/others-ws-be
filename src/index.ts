@@ -7,7 +7,11 @@ import { participantRouter } from "./routes/participant";
 import { topLog, notExisted } from "./middlewares";
 import { courseRouter } from "./routes/course";
 import { course_partRouter } from "./routes/course_participant";
-import { newCalFinalGrades, calTotalPoint } from "./helpers/common";
+import {
+  newCalFinalGrades,
+  calTotalPoint,
+  assQueryBuilder
+} from "./helpers/common";
 import { pointRouter } from "./routes/point";
 
 const app = express(); //
@@ -38,3 +42,6 @@ app.listen(config.server.port, () =>
     `Server running on ${config.server.hostname}:${config.server.port}`
   )
 );
+
+// - xoa
+// console.log(assQueryBuilder("course_participant", 10));

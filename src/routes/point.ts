@@ -7,7 +7,8 @@ import {
   getOneResource,
   processGrade,
   createResource,
-  deleteResource
+  deleteResource,
+  updateResource
 } from "../controllers/point";
 
 const pointRouter = express.Router();
@@ -21,7 +22,7 @@ pointRouter.get("/:id", getOneResource);
 pointRouter.post("/", processGrade, createResource);
 
 // // --- PUT ---
-// course_partRouter.put("/:id", updateAndGetOneRACompatible);
+pointRouter.put("/:id", processGrade, updateResource);
 
 // --- DELETE ---
 pointRouter.delete("/:id", getOneResource, deleteResource);

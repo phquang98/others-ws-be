@@ -1,8 +1,21 @@
 import { Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
 
-import { Course_Participant, returnQuery } from "../models/types";
-import { mysqlErrorHdlr, calTotalPoint } from "../helpers/common";
+import {
+  Course,
+  Course_Participant,
+  Interval,
+  returnQuery
+} from "../models/types";
+import {
+  mysqlErrorHdlr,
+  calTotalPoint,
+  assQueryBuilder,
+  assQueryBuilderUpdate,
+  escapeValuesBuilder,
+  newCalFinalGrades,
+  escapeValuesBuilderUpdate
+} from "../helpers/common";
 import { triggerQuery } from "./common";
 import logging from "../helpers/logging";
 import { notExisted } from "../middlewares";
@@ -11,6 +24,7 @@ import { notExisted } from "../middlewares";
 
 dotenv.config();
 const tbl = process.env.MYSQL_TBL_3;
+const tbl2 = process.env.MYSQL_TBL_2;
 
 type ReqParams = {
   id: string;
@@ -39,6 +53,9 @@ type ResLocals = {
   createdId?: string;
   isNext?: boolean;
   keysToReturn?: [string, string, string | undefined]; // used for course_part, as only know course_id and part_id, not the id of the row
+  used_ass: number;
+  max_point_ass?: string;
+  interval?: Interval;
 };
 
 const NAMESPACE = "CONTROLLER/POINT";
@@ -106,16 +123,66 @@ const getOneResource = async (
 
 //* processGrade: handles all the shit from FE -> calculate shit -> everything ready to be written to DB
 // must provide ResBody, so the last getOne use it
-const processGrade = (
+const processGrade = async (
   req: Request<ReqParams, ResBodyOne, ReqBody, ReqQuery, ResLocals>,
   res: Response<ResBodyOne, ResLocals>,
   next: NextFunction
 ) => {
-  // !const totalGradeP = calTotalPoint([req.body.assignment_1, req.body.assignment_2, req.body.assignment_3])
-  res.locals = {
-    calculatedGrade: 75
-  };
-  next();
+  const queryDataForGrade = `SELECT * FROM ${tbl2} WHERE id = ?`;
+  const escapeValues = [req.body.course_id];
+
+  try {
+    const dataForCalGrade: Course[] = await triggerQuery<
+      ReqParams,
+      ResBodyOne,
+      ReqBody,
+      ReqQuery,
+      ResLocals
+    >(req, res, NAMESPACE, "processGrade", queryDataForGrade, escapeValues);
+    // res.locals = {
+    //   used_ass: dataForCalGrade[0].used_assignments,
+    //   max_point_ass: dataForCalGrade[0].max_assignment_point,
+    //   interval: [
+    //     Number(dataForCalGrade[0].grade1_interval),
+    //     Number(dataForCalGrade[0].grade2_interval),
+    //     Number(dataForCalGrade[0].grade3_interval),
+    //     Number(dataForCalGrade[0].grade4_interval),
+    //     Number(dataForCalGrade[0].grade5_interval)
+    //   ],
+    //   calculatedGrade: 75
+    // };
+    const gradeBeforeEvaluate = calTotalPoint(
+      [
+        Number(req.body.assignment_1),
+        Number(req.body.assignment_2),
+        Number(req.body.assignment_3),
+        Number(req.body.assignment_4),
+        Number(req.body.assignment_5),
+        Number(req.body.assignment_6),
+        Number(req.body.assignment_7),
+        Number(req.body.assignment_8),
+        Number(req.body.assignment_9),
+        Number(req.body.assignment_10)
+      ].slice(0, dataForCalGrade[0].used_assignments),
+      dataForCalGrade[0].used_assignments,
+      Number(dataForCalGrade[0].max_assignment_point),
+      Number(req.body.exam)
+    );
+    res.locals = {
+      calculatedGrade: newCalFinalGrades(gradeBeforeEvaluate, [
+        dataForCalGrade[0].grade1_interval,
+        dataForCalGrade[0].grade2_interval,
+        dataForCalGrade[0].grade3_interval,
+        dataForCalGrade[0].grade4_interval,
+        dataForCalGrade[0].grade5_interval
+      ]),
+      used_ass: dataForCalGrade[0].used_assignments
+    };
+    // return res.status(200).json({ goodshit: res.locals, goldenShit });
+    next();
+  } catch (error) {
+    return res.status(404);
+  }
 };
 
 //* create: processGrade -> create CRUD
@@ -123,16 +190,9 @@ const createResource = async (
   req: Request<ReqParams, ResBodyOne, ReqBody, ReqQuery, ResLocals>,
   res: Response<ResBodyOne, ResLocals>
 ) => {
-  const createQuery = `INSERT INTO ${tbl} (course_id, participant_id, assignment_1, assignment_2, assignment_3, exam, grade) VALUES (?, ?, ?, ?, ?, ?, ?)`;
-  const createEscapeValues = [
-    req.body.course_id,
-    req.body.participant_id,
-    req.body.assignment_1,
-    req.body.assignment_2,
-    req.body.assignment_3,
-    req.body.exam,
-    res.locals.calculatedGrade
-  ];
+  const newCreateQuery = assQueryBuilder(tbl, res.locals.used_ass);
+  console.log(newCreateQuery);
+  const newEscapeValues = escapeValuesBuilder(req, res);
 
   try {
     const createQueryRes: returnQuery = await triggerQuery<
@@ -141,7 +201,7 @@ const createResource = async (
       ReqBody,
       ReqQuery,
       ResLocals
-    >(req, res, NAMESPACE, "createResource", createQuery, createEscapeValues);
+    >(req, res, NAMESPACE, "createResource", newCreateQuery, newEscapeValues);
     res.locals = {
       ...res.locals,
       createdId: createQueryRes.insertId.toString()
@@ -153,6 +213,61 @@ const createResource = async (
       assignment_1: req.body.assignment_1,
       assignment_2: req.body.assignment_2,
       assignment_3: req.body.assignment_3,
+      assignment_4: req.body.assignment_4,
+      assignment_5: req.body.assignment_5,
+      assignment_6: req.body.assignment_6,
+      assignment_7: req.body.assignment_7,
+      assignment_8: req.body.assignment_8,
+      assignment_9: req.body.assignment_9,
+      assignment_10: req.body.assignment_10,
+      exam: req.body.exam,
+      grade: res.locals.calculatedGrade
+    });
+  } catch (error) {
+    return res.status(404);
+  }
+};
+
+const updateResource = async (
+  req: Request<ReqParams, ResBodyOne, ReqBody, ReqQuery, ResLocals>,
+  res: Response<ResBodyOne, ResLocals>,
+  next: NextFunction
+) => {
+  // const newUpdateQuery = `UPDATE ${tbl} SET assignment_1 = ?, assignment_2 = ?, assignment_3 = ?, assignment_4 = ?, assignment_5 = ?, exam = ?, grade = ? WHERE id = ?`;
+
+  const newUpdateQuery = assQueryBuilderUpdate(tbl, res.locals.used_ass);
+  const updateEscapeValues = escapeValuesBuilderUpdate(req, res);
+  logging.info(NAMESPACE, "update", { newUpdateQuery, updateEscapeValues });
+
+  try {
+    const updateQueryRes = await triggerQuery<
+      ReqParams,
+      ResBodyOne,
+      ReqBody,
+      ReqQuery,
+      ResLocals
+    >(
+      req,
+      res,
+      NAMESPACE,
+      "updateResource",
+      newUpdateQuery,
+      updateEscapeValues
+    );
+    return res.status(200).json({
+      id: updateQueryRes.insertId,
+      course_id: req.body.course_id,
+      participant_id: req.body.participant_id,
+      assignment_1: req.body.assignment_1,
+      assignment_2: req.body.assignment_2,
+      assignment_3: req.body.assignment_3,
+      assignment_4: req.body.assignment_4,
+      assignment_5: req.body.assignment_5,
+      assignment_6: req.body.assignment_6,
+      assignment_7: req.body.assignment_7,
+      assignment_8: req.body.assignment_8,
+      assignment_9: req.body.assignment_9,
+      assignment_10: req.body.assignment_10,
       exam: req.body.exam,
       grade: res.locals.calculatedGrade
     });
@@ -195,5 +310,6 @@ export {
   getOneResource,
   processGrade,
   createResource,
+  updateResource,
   deleteResource
 };

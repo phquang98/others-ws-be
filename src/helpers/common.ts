@@ -1,16 +1,6 @@
-import { Response } from "express";
+import { Request, Response } from "express";
 
-import { MySQLErr, Interval } from "../models/types";
-
-const calculateFinalGrades = (
-  coef1Tests: number[],
-  coef2Tests?: number[],
-  coef3Tests?: number[]
-) => {
-  const divisor = coef1Tests.length;
-  const totalSum = coef1Tests.reduce((accum, curVal) => accum + curVal);
-  return (totalSum / divisor).toFixed(3);
-};
+import { MySQLErr, Interval, Course_Participant } from "../models/types";
 
 /**
  * Grade calculation algorithm\
@@ -33,12 +23,107 @@ const calTotalPoint = (
   const assP = (assReal / (usedAss * 10)) * maxAssPart;
   const examP = (examReal / 100) * (100 - maxAssPart);
   const totalP = assP + examP;
-  return totalP;
+  return Math.round(totalP);
 };
 
-const newCalFinalGrades = (ptArr: number[], interval: Interval): number => {
-  const total = ptArr.reduce((accum, curVal) => accum + curVal);
+// Construct the SQL based on how many assignments used for grade cal
+const assQueryBuilder = (tableName: string | undefined, usedAss: number) => {
+  let insertField = "";
+  let insertQuestionMark = "";
+  for (let index = 1; index <= usedAss; index++) {
+    if (index === usedAss) {
+      insertField += `assignment_${index}`;
+      insertQuestionMark += `?`;
+    } else {
+      insertField += `assignment_${index}, `;
+      insertQuestionMark += `?, `;
+    }
+  }
+  const fullQuery = `INSERT INTO ${tableName} (course_id, participant_id, ${insertField}, exam, grade) VALUES (?, ?, ${insertQuestionMark}, ?, ?)`;
+  return fullQuery;
+};
 
+const assQueryBuilderUpdate = (
+  tableName: string | undefined,
+  usedAss: number
+) => {
+  let insertField = "";
+  for (let index = 1; index <= usedAss; index++) {
+    insertField += `assignment_${index} = ?, `;
+  }
+
+  const fullUpdateQuery = `UPDATE ${tableName} SET ${insertField}exam = ?, grade = ? WHERE id = ?`;
+  return fullUpdateQuery;
+};
+
+// ! very bad code
+type ResLocals = {
+  calculatedGrade?: number;
+  deletedId?: string;
+  createdId?: string;
+  isNext?: boolean;
+  keysToReturn?: [string, string, string | undefined]; // used for course_part, as only know course_id and part_id, not the id of the row
+  used_ass: number;
+  max_point_ass?: string;
+  interval?: Interval;
+};
+
+type ReqParams = {
+  id: string;
+};
+
+const escapeValuesBuilder = (
+  req: Request<any, any, Course_Participant, any, ResLocals>,
+  res: Response<any, ResLocals>
+) => {
+  const startEscapeValues: (string | number | undefined)[] = [
+    req.body.course_id,
+    req.body.participant_id
+  ];
+  const endEscapeValues = [req.body.exam, res.locals.calculatedGrade];
+  const assEscapeValues = [
+    req.body.assignment_1,
+    req.body.assignment_2,
+    req.body.assignment_3,
+    req.body.assignment_4,
+    req.body.assignment_5,
+    req.body.assignment_6,
+    req.body.assignment_7,
+    req.body.assignment_8,
+    req.body.assignment_9,
+    req.body.assignment_10
+  ].slice(0, res.locals.used_ass);
+  return startEscapeValues.concat(assEscapeValues).concat(endEscapeValues);
+};
+
+const escapeValuesBuilderUpdate = (
+  req: Request<ReqParams, any, Course_Participant, any, ResLocals>,
+  res: Response<any, ResLocals>
+) => {
+  const endEscapeValues = [
+    req.body.exam,
+    res.locals.calculatedGrade,
+    req.params.id
+  ];
+  const startEscapeValues = [
+    req.body.assignment_1,
+    req.body.assignment_2,
+    req.body.assignment_3,
+    req.body.assignment_4,
+    req.body.assignment_5,
+    req.body.assignment_6,
+    req.body.assignment_7,
+    req.body.assignment_8,
+    req.body.assignment_9,
+    req.body.assignment_10
+  ].slice(0, res.locals.used_ass);
+  return startEscapeValues.concat(endEscapeValues);
+};
+
+const newCalFinalGrades = (
+  gradeBeforeEvalute: number,
+  interval: Interval
+): number => {
   // ass1: 5/10
   // ass: 7/10
   // ass3: 4/10
@@ -81,22 +166,33 @@ const newCalFinalGrades = (ptArr: number[], interval: Interval): number => {
   // student 45 -> grade 1
   // student grade 60 -> grade 2
   // student grade 50 -> grade 1
+  console.log("cai loz", gradeBeforeEvalute);
+  console.log("cai cac", interval);
 
-  console.log("o common", total);
-  console.log("o common", interval[4]);
-
-  if (total < interval[0]) {
+  if (gradeBeforeEvalute < interval[0]) {
     return 0;
-  } else if (total >= interval[0] && total < interval[1]) {
+  } else if (
+    gradeBeforeEvalute >= interval[0] &&
+    gradeBeforeEvalute < interval[1]
+  ) {
     return 1;
-  } else if (total >= interval[1] && total < interval[2]) {
+  } else if (
+    gradeBeforeEvalute >= interval[1] &&
+    gradeBeforeEvalute < interval[2]
+  ) {
     return 2;
-  } else if (total >= interval[2] && total < interval[3]) {
+  } else if (
+    gradeBeforeEvalute >= interval[2] &&
+    gradeBeforeEvalute < interval[3]
+  ) {
     return 3;
-  } else if (total >= interval[3] && total < interval[4]) {
+  } else if (
+    gradeBeforeEvalute >= interval[3] &&
+    gradeBeforeEvalute < interval[4]
+  ) {
     return 4;
   } else {
-    return 0;
+    return 5;
   }
 };
 
@@ -146,8 +242,11 @@ const mysqlErrorHdlr = (queryErr: MySQLErr, res: Response) => {
 };
 
 export {
-  calculateFinalGrades,
   mysqlErrorHdlr,
   newCalFinalGrades,
-  calTotalPoint
+  calTotalPoint,
+  assQueryBuilder,
+  assQueryBuilderUpdate,
+  escapeValuesBuilder,
+  escapeValuesBuilderUpdate
 };

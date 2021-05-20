@@ -70,11 +70,7 @@ const getListRACompatible = (
   }
 };
 
-const getOneRACompatible = (
-  req: Request<ReqParams>,
-  res: Response<Course>,
-  next: NextFunction
-) => {
+const getOneRACompatible = (req: Request<ReqParams>, res: Response<Course>) => {
   const query = `SELECT * FROM ${tbl} WHERE id = ? `;
   const escapeValues = [req.params.id];
 
@@ -93,17 +89,17 @@ const getOneRACompatible = (
 
 const createAndGetOneRACompatible = (
   req: Request<ReqParams, unknown, Course>,
-  res: Response,
-  next: NextFunction
+  res: Response
 ) => {
-  const createQuery = `INSERT INTO ${tbl} (id, course_title, date_started, date_ended, 
-grade1_interval, grade2_interval, grade3_interval, grade4_interval, grade5_interval)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  const createQuery = `INSERT INTO ${tbl} (id, course_title, date_started, date_ended, used_assignments, max_assignment_point, grade1_interval, grade2_interval, grade3_interval, grade4_interval, grade5_interval)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
   const createEscapeValues = [
     req.body.id,
     req.body.course_title,
     req.body.date_started.slice(0, 10),
     req.body.date_ended.slice(0, 10),
+    req.body.used_assignments,
+    req.body.max_assignment_point,
     req.body.grade1_interval,
     req.body.grade2_interval,
     req.body.grade3_interval,
@@ -143,7 +139,9 @@ const updateAndGetOneRACompatible = (
   const updateQuery = `UPDATE ${tbl} SET 
   course_title = ?, 
   date_started = ?, 
-  date_ended = ?, 
+  date_ended = ?,
+  used_assignments = ?,
+  max_assignment_point = ?,
   grade1_interval = ?, 
   grade2_interval = ?, 
   grade3_interval = ?,
@@ -154,6 +152,8 @@ const updateAndGetOneRACompatible = (
     req.body.course_title,
     req.body.date_started.slice(0, 10),
     req.body.date_ended.slice(0, 10),
+    req.body.used_assignments,
+    req.body.max_assignment_point,
     req.body.grade1_interval,
     req.body.grade2_interval,
     req.body.grade3_interval,

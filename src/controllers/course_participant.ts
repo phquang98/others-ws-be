@@ -8,11 +8,7 @@ import {
   MySQLErr
 } from "../models/types";
 import { PromisablePoolCXN as pool } from "../helpers/mysql";
-import {
-  calculateFinalGrades,
-  newCalFinalGrades,
-  mysqlErrorHdlr
-} from "../helpers/common";
+import { newCalFinalGrades, mysqlErrorHdlr } from "../helpers/common";
 
 // ~ Variables
 
