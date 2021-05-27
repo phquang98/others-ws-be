@@ -26,18 +26,21 @@ type Course_Participant = {
   course_id: string;
   participant_id: string;
   //* below should be handle conversion by controllers into numeric values
-  assignment_1?: string | number;
-  assignment_2?: string | number;
-  assignment_3?: string | number;
-  assignment_4?: string | number;
-  assignment_5?: string | number;
-  assignment_6?: string | number;
-  assignment_7?: string | number;
-  assignment_8?: string | number;
-  assignment_9?: string | number;
-  assignment_10?: string | number;
-  exam: number;
   grade?: string | number;
+  total?: number;
+  exam_point?: number;
+  exam: number;
+  assignment_point?: number;
+  assignment_1?: number;
+  assignment_2?: number;
+  assignment_3?: number;
+  assignment_4?: number;
+  assignment_5?: number;
+  assignment_6?: number;
+  assignment_7?: number;
+  assignment_8?: number;
+  assignment_9?: number;
+  assignment_10?: number;
 };
 
 // ~ Controller typings

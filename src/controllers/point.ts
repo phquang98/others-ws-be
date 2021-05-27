@@ -8,7 +8,6 @@ import {
   returnQuery
 } from "../models/types";
 import {
-  mysqlErrorHdlr,
   calTotalPoint,
   assQueryBuilder,
   assQueryBuilderUpdate,
@@ -18,7 +17,6 @@ import {
 } from "../helpers/common";
 import { triggerQuery } from "./common";
 import logging from "../helpers/logging";
-import { notExisted } from "../middlewares";
 
 // ~ File vars
 
@@ -56,6 +54,9 @@ type ResLocals = {
   used_ass: number;
   max_point_ass?: string;
   interval?: Interval;
+  assP?: number;
+  examP?: number;
+  total?: number;
 };
 
 const NAMESPACE = "CONTROLLER/POINT";
@@ -169,14 +170,17 @@ const processGrade = async (
       Number(req.body.exam)
     );
     res.locals = {
-      calculatedGrade: newCalFinalGrades(gradeBeforeEvaluate, [
+      calculatedGrade: newCalFinalGrades(gradeBeforeEvaluate[0], [
         dataForCalGrade[0].grade1_interval,
         dataForCalGrade[0].grade2_interval,
         dataForCalGrade[0].grade3_interval,
         dataForCalGrade[0].grade4_interval,
         dataForCalGrade[0].grade5_interval
       ]),
-      used_ass: dataForCalGrade[0].used_assignments
+      used_ass: dataForCalGrade[0].used_assignments,
+      total: gradeBeforeEvaluate[0],
+      examP: gradeBeforeEvaluate[1],
+      assP: gradeBeforeEvaluate[2]
     };
     // return res.status(200).json({ goodshit: res.locals, goldenShit });
     next();
@@ -193,6 +197,7 @@ const createResource = async (
   const newCreateQuery = assQueryBuilder(tbl, res.locals.used_ass);
   console.log(newCreateQuery);
   const newEscapeValues = escapeValuesBuilder(req, res);
+  logging.info(NAMESPACE, "important", { newCreateQuery, newEscapeValues });
 
   try {
     const createQueryRes: returnQuery = await triggerQuery<
@@ -210,6 +215,11 @@ const createResource = async (
       id: createQueryRes.insertId,
       course_id: req.body.course_id,
       participant_id: req.body.participant_id,
+      grade: res.locals.calculatedGrade,
+      total: res.locals.total,
+      exam_point: res.locals.examP,
+      exam: req.body.exam,
+      assignment_point: res.locals.assP,
       assignment_1: req.body.assignment_1,
       assignment_2: req.body.assignment_2,
       assignment_3: req.body.assignment_3,
@@ -219,9 +229,7 @@ const createResource = async (
       assignment_7: req.body.assignment_7,
       assignment_8: req.body.assignment_8,
       assignment_9: req.body.assignment_9,
-      assignment_10: req.body.assignment_10,
-      exam: req.body.exam,
-      grade: res.locals.calculatedGrade
+      assignment_10: req.body.assignment_10
     });
   } catch (error) {
     return res.status(404);
@@ -233,11 +241,9 @@ const updateResource = async (
   res: Response<ResBodyOne, ResLocals>,
   next: NextFunction
 ) => {
-  // const newUpdateQuery = `UPDATE ${tbl} SET assignment_1 = ?, assignment_2 = ?, assignment_3 = ?, assignment_4 = ?, assignment_5 = ?, exam = ?, grade = ? WHERE id = ?`;
-
   const newUpdateQuery = assQueryBuilderUpdate(tbl, res.locals.used_ass);
   const updateEscapeValues = escapeValuesBuilderUpdate(req, res);
-  logging.info(NAMESPACE, "update", { newUpdateQuery, updateEscapeValues });
+  logging.info(NAMESPACE, "important", { newUpdateQuery, updateEscapeValues });
 
   try {
     const updateQueryRes = await triggerQuery<
@@ -258,6 +264,10 @@ const updateResource = async (
       id: updateQueryRes.insertId,
       course_id: req.body.course_id,
       participant_id: req.body.participant_id,
+      grade: res.locals.calculatedGrade,
+      total: res.locals.total,
+      exam_point: res.locals.examP,
+      exam: req.body.exam,
       assignment_1: req.body.assignment_1,
       assignment_2: req.body.assignment_2,
       assignment_3: req.body.assignment_3,
@@ -267,9 +277,7 @@ const updateResource = async (
       assignment_7: req.body.assignment_7,
       assignment_8: req.body.assignment_8,
       assignment_9: req.body.assignment_9,
-      assignment_10: req.body.assignment_10,
-      exam: req.body.exam,
-      grade: res.locals.calculatedGrade
+      assignment_10: req.body.assignment_10
     });
   } catch (error) {
     return res.status(404);

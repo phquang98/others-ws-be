@@ -41,7 +41,7 @@ const triggerQuery = async <
     const queryRes = JSON.parse(JSON.stringify(rows));
     return queryRes;
   } catch (e) {
-    console.log("Oops");
+    console.log("Failed to execute SQL, check the query.");
   }
 };
 

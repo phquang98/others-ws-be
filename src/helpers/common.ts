@@ -18,12 +18,12 @@ const calTotalPoint = (
   usedAss: number,
   maxAssPart: number,
   examReal: number
-) => {
+): [number, number, number] => {
   const assReal = assPointClt.reduce((accum, curVal) => accum + curVal);
   const assP = (assReal / (usedAss * 10)) * maxAssPart;
   const examP = (examReal / 100) * (100 - maxAssPart);
   const totalP = assP + examP;
-  return Math.round(totalP);
+  return [Math.round(totalP), examP, assP];
 };
 
 // Construct the SQL based on how many assignments used for grade cal
@@ -39,7 +39,7 @@ const assQueryBuilder = (tableName: string | undefined, usedAss: number) => {
       insertQuestionMark += `?, `;
     }
   }
-  const fullQuery = `INSERT INTO ${tableName} (course_id, participant_id, ${insertField}, exam, grade) VALUES (?, ?, ${insertQuestionMark}, ?, ?)`;
+  const fullQuery = `INSERT INTO ${tableName} (course_id, participant_id, total, exam_point, assignment_point, ${insertField}, exam, grade) VALUES (?, ?, ?, ?, ?, ${insertQuestionMark}, ?, ?)`;
   return fullQuery;
 };
 
@@ -52,7 +52,7 @@ const assQueryBuilderUpdate = (
     insertField += `assignment_${index} = ?, `;
   }
 
-  const fullUpdateQuery = `UPDATE ${tableName} SET ${insertField}exam = ?, grade = ? WHERE id = ?`;
+  const fullUpdateQuery = `UPDATE ${tableName} SET ${insertField}exam = ?, grade = ?, total = ?, exam_point = ?, assignment_point = ? WHERE id = ?`;
   return fullUpdateQuery;
 };
 
@@ -66,6 +66,9 @@ type ResLocals = {
   used_ass: number;
   max_point_ass?: string;
   interval?: Interval;
+  assP?: number;
+  examP?: number;
+  total?: number;
 };
 
 type ReqParams = {
@@ -78,7 +81,10 @@ const escapeValuesBuilder = (
 ) => {
   const startEscapeValues: (string | number | undefined)[] = [
     req.body.course_id,
-    req.body.participant_id
+    req.body.participant_id,
+    res.locals.total,
+    res.locals.examP,
+    res.locals.assP
   ];
   const endEscapeValues = [req.body.exam, res.locals.calculatedGrade];
   const assEscapeValues = [
@@ -103,6 +109,9 @@ const escapeValuesBuilderUpdate = (
   const endEscapeValues = [
     req.body.exam,
     res.locals.calculatedGrade,
+    res.locals.total,
+    res.locals.examP,
+    res.locals.assP,
     req.params.id
   ];
   const startEscapeValues = [
